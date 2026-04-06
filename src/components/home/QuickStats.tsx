@@ -19,7 +19,8 @@ export function QuickStats({
   expressions,
 }: QuickStatsProps) {
   const dueCount =
-    dueItems(words).length + dueItems(expressions).length;
+    dueItems(words.filter((w) => w.srsStage > 0)).length +
+    dueItems(expressions.filter((e) => e.srsStage > 0)).length;
   const progress = Math.min(1, todayCount / dailyGoal);
 
   return (

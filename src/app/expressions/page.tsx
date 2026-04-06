@@ -8,7 +8,7 @@ import { useExpressions } from "@/hooks/useExpressions";
 import { useGenerate } from "@/hooks/useGenerate";
 import { useProgress } from "@/hooks/useProgress";
 import { useSpeech } from "@/hooks/useSpeech";
-import { romajiMatch } from "@/lib/romaji";
+import { matchJapanese } from "@/lib/japaneseMatch";
 import * as storage from "@/lib/storage";
 import { dueItems } from "@/lib/srs";
 import type { Expression } from "@/types";
@@ -63,7 +63,7 @@ export default function ExpressionsPage() {
 
   const handleSubmit = useCallback(() => {
     if (!current || !input.trim()) return;
-    const correct = romajiMatch(input.trim(), current.answer_romaji, current.acceptable_answers);
+    const correct = matchJapanese(input.trim(), [current.answer_ja, current.answer_kana]);
     setIsCorrect(correct);
     setPhase("result");
     recordResult(current.id, correct);
@@ -127,7 +127,7 @@ export default function ExpressionsPage() {
           <div className="text-5xl">{done ? "✅" : "💬"}</div>
           <div>
             <h2 className="text-xl font-bold text-foreground mb-1">情景表达练习</h2>
-            <p className="text-muted text-sm">{queue.length} 道题 · 输入罗马字作答</p>
+            <p className="text-muted text-sm">{queue.length} 道题 · 输入日语作答</p>
           </div>
 
           {done && (
@@ -208,11 +208,12 @@ export default function ExpressionsPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="输入罗马字… (Enter 提交)"
-                className="w-full bg-surface/50 border border-surface rounded-xl px-5 py-3 text-center font-mono text-lg text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+                placeholder="输入日语… (Enter 提交)"
+                className="w-full bg-surface/50 border border-surface rounded-xl px-5 py-3 text-center font-jp text-lg text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
+                lang="ja"
               />
               <Button onClick={handleSubmit} disabled={!input.trim()}>
                 提交

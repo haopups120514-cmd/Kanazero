@@ -6,6 +6,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useProgress } from "@/hooks/useProgress";
 import { dueItems } from "@/lib/srs";
+import { matchJapanese } from "@/lib/japaneseMatch";
 import type { Word } from "@/types";
 import { TOPIC_CATEGORIES } from "@/types";
 import { Volume2 } from "lucide-react";
@@ -73,8 +74,8 @@ export default function HandwritingPage() {
 
   const handleSubmit = useCallback(() => {
     if (!current || !input.trim() || feedback?.correct) return;
-    const answer = input.trim();
-    const correct = answer === current.word || answer === current.kana;
+    // matchJapanese handles hira/kata equivalence, long-vowel variants, punctuation
+    const correct = matchJapanese(input.trim(), [current.word, current.kana]);
     setFeedback({ correct, correctAnswer: current.word });
     recordResult(current.id, correct);
     recordActivity(1);
@@ -84,7 +85,6 @@ export default function HandwritingPage() {
     }));
     speak(current.word);
     if (!correct) {
-      // Wrong: clear input after showing the answer briefly, allow retry
       setTimeout(() => {
         setInput("");
         setFeedback(null);
@@ -130,107 +130,113 @@ export default function HandwritingPage() {
   }
 
   return (
-    <PageLayout center maxWidth="sm" noPadding>
-      {/* Topic selector */}
-      {availableTopics.length > 1 && (
-        <div className="w-full px-6 pt-4 pb-0 flex gap-1.5 flex-wrap">
-          <TopicPill label="全部" active={selectedTopic === "all"} onClick={() => setSelectedTopic("all")} />
-          {availableTopics.map((t) => (
-            <TopicPill key={t} label={t} active={selectedTopic === t} onClick={() => setSelectedTopic(t)} />
-          ))}
-        </div>
-      )}
-
-      {/* Progress row */}
-      <div className="w-full px-6 pt-2 pb-1 flex items-center justify-between">
-        <span className="text-xs text-muted">{index + 1} / {queue.length}</span>
-        {score.correct + score.wrong > 0 && (
-          <span className="text-xs">
-            <span className="text-success">{score.correct}✓</span>
-            <span className="text-muted"> · </span>
-            <span className="text-error">{score.wrong}✗</span>
-          </span>
-        )}
-      </div>
-
-      {current && (
-        <div className="flex flex-col items-center gap-3 w-full px-6 pb-4 pt-0">
-          {/* Question card */}
-          <div className="w-full bg-bg-card border border-surface rounded-2xl p-5 text-center">
-            <p className="text-xs text-muted mb-1">{current.pos} · {current.topic}</p>
-            <p className="text-3xl font-bold text-foreground mb-1">{current.meaning_zh}</p>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-lg text-accent font-mono">{current.kana}</span>
-              <button
-                onClick={() => speak(current.word)}
-                className="text-muted/40 hover:text-accent transition-colors"
-              >
-                <Volume2 size={16} />
-              </button>
-            </div>
-            {settings.showFurigana && feedback && (
-              <p className="text-4xl font-bold text-foreground mt-3">{current.word}</p>
-            )}
+    <PageLayout maxWidth="sm" noPadding>
+      {/*
+        Content positioned in the upper 3/4 of the screen.
+        pt-[20vh] starts content ~20% from top — not at top, not centered.
+        pb-16 reserves space below so content doesn't hug the bottom.
+      */}
+      <div className="flex flex-col items-center w-full px-6 pt-[20vh] pb-16 gap-3">
+        {/* Topic selector */}
+        {availableTopics.length > 1 && (
+          <div className="w-full flex gap-1.5 flex-wrap mb-1">
+            <TopicPill label="全部" active={selectedTopic === "all"} onClick={() => setSelectedTopic("all")} />
+            {availableTopics.map((t) => (
+              <TopicPill key={t} label={t} active={selectedTopic === t} onClick={() => setSelectedTopic(t)} />
+            ))}
           </div>
+        )}
 
-          {/* Input row: 清除 | textarea | 提交 */}
-          <div className="w-full flex items-stretch gap-2">
-            <button
-              onClick={() => { setInput(""); inputRef.current?.focus(); }}
-              className="flex-none w-14 flex flex-col items-center justify-center gap-0.5
-                bg-surface/40 border-2 border-surface rounded-2xl text-muted text-xs
-                hover:text-foreground hover:border-surface/80 transition-colors"
-            >
-              <span>清</span>
-              <span>除</span>
-            </button>
+        {/* Progress row */}
+        <div className="w-full flex items-center justify-between">
+          <span className="text-xs text-muted">{index + 1} / {queue.length}</span>
+          {score.correct + score.wrong > 0 && (
+            <span className="text-xs">
+              <span className="text-success">{score.correct}✓</span>
+              <span className="text-muted"> · </span>
+              <span className="text-error">{score.wrong}✗</span>
+            </span>
+          )}
+        </div>
 
+        {current && (
+          <>
+            {/* Question card */}
+            <div className="w-full bg-bg-card border border-surface rounded-2xl p-5 text-center">
+              <p className="text-xs text-muted mb-1">{current.pos} · {current.topic}</p>
+              <p className="text-3xl font-bold text-foreground mb-1">{current.meaning_zh}</p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <span className="text-lg text-accent font-jp">{current.kana}</span>
+                <button
+                  onClick={() => speak(current.word)}
+                  className="text-muted/40 hover:text-accent transition-colors"
+                >
+                  <Volume2 size={16} />
+                </button>
+              </div>
+              {settings.showFurigana && feedback && (
+                <p className="text-4xl font-bold font-jp text-foreground mt-3">{current.word}</p>
+              )}
+            </div>
+
+            {/* Handwriting input — canvas-style textarea */}
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="书写…"
-              rows={2}
+              placeholder="在此书写…"
               disabled={!!feedback?.correct}
-              className={`flex-1 bg-surface/40 border-2 rounded-2xl px-3 py-3 text-center font-serif text-4xl
-                text-foreground placeholder:text-muted/30 focus:outline-none transition-colors resize-none h-24
+              lang="ja"
+              className={`w-full bg-bg-card border-2 border-dashed rounded-2xl p-4 text-center font-jp text-5xl
+                text-foreground placeholder:text-muted/20 focus:outline-none transition-colors resize-none h-40
                 ${feedback
                   ? feedback.correct
                     ? "border-success/60 bg-success/5"
                     : "border-error/60 bg-error/5"
-                  : "border-surface focus:border-accent"
+                  : "border-surface/50 focus:border-accent/50"
                 }`}
-              autoComplete="off" autoCorrect="off" spellCheck={false} autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
 
-            <button
-              onClick={handleSubmit}
-              disabled={!input.trim() || !!feedback?.correct}
-              className="flex-none w-14 flex flex-col items-center justify-center gap-0.5
-                bg-accent text-white rounded-2xl text-xs font-medium
-                disabled:opacity-40 transition-colors hover:bg-accent-dim"
-            >
-              <span>提</span>
-              <span>交</span>
-            </button>
-          </div>
-
-          {/* Inline feedback */}
-          {feedback && (
-            <div className={`w-full rounded-xl px-4 py-2.5 text-center border text-sm
-              ${feedback.correct
-                ? "bg-success/10 border-success/30 text-success"
-                : "bg-error/10 border-error/30 text-error"
-              }`}>
-              {feedback.correct
-                ? "正解！自动跳转…"
-                : <>正确答案：<span className="font-serif text-xl">{feedback.correctAnswer}</span></>
-              }
+            {/* Two submit buttons — left and right for left/right hand users */}
+            <div className="w-full flex gap-3">
+              <button
+                onClick={handleSubmit}
+                disabled={!input.trim() || !!feedback?.correct}
+                className="flex-1 py-4 bg-accent text-white rounded-2xl text-sm font-medium
+                  disabled:opacity-40 transition-all hover:bg-accent-dim active:scale-[0.98]"
+              >
+                提交
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!input.trim() || !!feedback?.correct}
+                className="flex-1 py-4 bg-accent text-white rounded-2xl text-sm font-medium
+                  disabled:opacity-40 transition-all hover:bg-accent-dim active:scale-[0.98]"
+              >
+                提交
+              </button>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Inline feedback */}
+            {feedback && (
+              <div className={`w-full rounded-xl px-4 py-2.5 text-center border text-sm
+                ${feedback.correct
+                  ? "bg-success/10 border-success/30 text-success"
+                  : "bg-error/10 border-error/30 text-error"
+                }`}>
+                {feedback.correct
+                  ? "正解！自动跳转…"
+                  : <>正确答案：<span className="font-jp text-xl">{feedback.correctAnswer}</span></>
+                }
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </PageLayout>
   );
 }

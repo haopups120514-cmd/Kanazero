@@ -161,16 +161,16 @@ export default function SettingsPage() {
 
         {/* Theme */}
         <Section title="主题外观">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               {isDark ? <Moon size={15} className="text-muted" /> : <Sun size={15} className="text-muted" />}
               <span className="text-sm text-muted">{isDark ? "深色模式" : "浅色模式"}</span>
             </div>
             <button
               onClick={toggleTheme}
-              className={`relative w-10 h-5 rounded-full transition-colors ${isDark ? "bg-accent" : "bg-surface"}`}
+              className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${isDark ? "bg-accent" : "bg-surface"}`}
             >
-              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isDark ? "translate-x-5" : "translate-x-0.5"}`} />
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`} />
             </button>
           </div>
           <p className="text-xs text-muted/50 mt-2">首次加载时跟随系统设置，可手动切换并记住选择</p>
@@ -191,13 +191,13 @@ export default function SettingsPage() {
         {/* Display */}
         <Section title="显示">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
               <span className="text-sm text-muted">显示假名</span>
               <button
                 onClick={() => setForm({ ...form, showFurigana: !form.showFurigana })}
-                className={`relative w-10 h-5 rounded-full transition-colors ${form.showFurigana ? "bg-accent" : "bg-surface"}`}
+                className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${form.showFurigana ? "bg-accent" : "bg-surface"}`}
               >
-                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${form.showFurigana ? "translate-x-5" : "translate-x-0.5"}`} />
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${form.showFurigana ? "translate-x-[22px]" : "translate-x-0.5"}`} />
               </button>
             </div>
             <div className="flex items-center gap-3">

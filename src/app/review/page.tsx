@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { TypingEngine } from "@/components/practice/TypingEngine";
 import { WordCard } from "@/components/practice/WordCard";
@@ -11,38 +11,50 @@ import { useTypingEngine } from "@/hooks/useTypingEngine";
 import { useSettings } from "@/hooks/useSettings";
 import { useProgress } from "@/hooks/useProgress";
 import { dueItems, formatNextReview } from "@/lib/srs";
+import * as storage from "@/lib/storage";
 import type { Word, Expression } from "@/types";
 
 type ReviewItem = { kind: "word"; item: Word } | { kind: "expression"; item: Expression };
 
+function buildQueue(): ReviewItem[] {
+  const w = storage.getWords();
+  const e = storage.getExpressions();
+  const dueWords = dueItems(w.filter((x) => x.srsStage > 0)).map(
+    (x) => ({ kind: "word" as const, item: x })
+  );
+  const dueExprs = dueItems(e.filter((x) => x.srsStage > 0)).map(
+    (x) => ({ kind: "expression" as const, item: x })
+  );
+  return [...dueWords, ...dueExprs];
+}
+
 export default function ReviewPage() {
-  const { words, recordResult: recordWordResult } = useWords();
-  const { expressions, recordResult: recordExprResult } = useExpressions();
+  // Only need recordResult side-effects from hooks; queue is built from storage directly
+  const { recordResult: recordWordResult } = useWords();
+  const { recordResult: recordExprResult } = useExpressions();
   const { settings } = useSettings();
   const { recordActivity } = useProgress();
 
   const [queue, setQueue] = useState<ReviewItem[]>([]);
+  const sessionQueueRef = useRef<ReviewItem[]>([]);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(0);
   const [mounted, setMounted] = useState(false);
 
+  // Build queue once on mount from storage — never rebuilds mid-session
   useEffect(() => {
     setMounted(true);
-    const dueWords = dueItems(words.filter((w) => w.srsStage > 0)).map(
-      (w) => ({ kind: "word" as const, item: w })
-    );
-    const dueExprs = dueItems(expressions.filter((e) => e.srsStage > 0)).map(
-      (e) => ({ kind: "expression" as const, item: e })
-    );
-    setQueue([...dueWords, ...dueExprs]);
-  }, [words, expressions]);
+    const initial = buildQueue();
+    setQueue(initial);
+    sessionQueueRef.current = initial;
+  }, []);
 
   const current = queue[index];
   const target =
     current?.kind === "word"
       ? current.item.romaji
       : current?.kind === "expression"
-      ? current.item.answer_romaji
+      ? (current.item.answer_romaji ?? "")
       : "";
 
   const engine = useTypingEngine(target);
@@ -91,7 +103,13 @@ export default function ReviewPage() {
             复习完成！共 {done} 个
           </h2>
           <p className="text-muted text-sm mb-4">太棒了，继续保持！</p>
-          <Button onClick={() => { setIndex(0); setDone(0); }}>重新复习</Button>
+          <Button onClick={() => {
+            setQueue([...sessionQueueRef.current]);
+            setIndex(0);
+            setDone(0);
+          }}>
+            重新复习
+          </Button>
         </div>
       </PageLayout>
     );
@@ -141,7 +159,7 @@ export default function ReviewPage() {
             <p className="text-foreground">{(current as { kind: "expression"; item: Expression }).item.scenario_zh}</p>
           </div>
           <TypingEngine
-            target={(current as { kind: "expression"; item: Expression }).item.answer_romaji}
+            target={(current as { kind: "expression"; item: Expression }).item.answer_romaji ?? ""}
             charStates={engine.charStates}
             typed={engine.typed}
             onKey={engine.handleKey}

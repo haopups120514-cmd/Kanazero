@@ -68,7 +68,7 @@ export default function StatsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-sm font-semibold text-foreground mb-4">BJT 模拟题</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4">题库</h2>
           <div className="flex flex-col gap-3">
             {[
               { label: "已答题数", value: stats.bjtStats.correct + stats.bjtStats.wrong },
@@ -101,12 +101,12 @@ export default function StatsPage() {
                 key={w.id}
                 className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface/30"
               >
-                <div className="flex items-center gap-3">
-                  <span className="font-jp font-bold text-foreground">{w.word}</span>
-                  <span className="text-muted text-xs">{w.kana}</span>
-                  <span className="text-muted/50 text-xs">{w.meaning_zh}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="font-jp font-bold text-foreground flex-shrink-0">{w.word}</span>
+                  <span className="text-muted text-xs flex-shrink-0">{w.kana}</span>
+                  <span className="text-muted/50 text-xs truncate">{w.meaning_zh}</span>
                 </div>
-                <span className="text-error text-xs font-mono">错 {w.wrongCount} 次</span>
+                <span className="text-error text-xs font-mono flex-shrink-0">错 {w.wrongCount} 次</span>
               </div>
             ))}
           </div>
