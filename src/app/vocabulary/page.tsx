@@ -18,6 +18,7 @@ export default function VocabularyPage() {
   const { generate, loading } = useGenerate();
 
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [genTopic, setGenTopic] = useState<string>(TOPICS[0]);
   const [genLevel, setGenLevel] = useState("N3");
   const [showGenModal, setShowGenModal] = useState(false);
@@ -25,8 +26,18 @@ export default function VocabularyPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  const filteredWords: Word[] =
-    selectedTopic === "all" ? words : words.filter((w) => w.topic === selectedTopic);
+  const filteredWords: Word[] = words.filter((w) => {
+    if (selectedTopic !== "all") return w.topic === selectedTopic;
+    if (selectedCategory !== "all") {
+      const cat = TOPIC_CATEGORIES.find((c) => c.label === selectedCategory);
+      return cat ? (cat.topics as readonly string[]).includes(w.topic) : true;
+    }
+    return true;
+  });
+
+  const visibleTopics = selectedCategory === "all"
+    ? TOPICS
+    : TOPIC_CATEGORIES.find((c) => c.label === selectedCategory)?.topics ?? [];
 
   const handleGenerate = async () => {
     const result = await generate({ type: "words", topic: genTopic, level: genLevel, count: 20 });
@@ -62,21 +73,46 @@ export default function VocabularyPage() {
         </div>
       </div>
 
-      {/* Topic filter */}
-      <div className="flex gap-2 flex-wrap mb-5">
-        <TopicBtn label={`全部 (${words.length})`} active={selectedTopic === "all"} onClick={() => setSelectedTopic("all")} />
-        {TOPICS.map((t) => {
-          const cnt = words.filter((w) => w.topic === t).length;
-          if (cnt === 0) return null;
-          return (
-            <TopicBtn
-              key={t}
-              label={`${TOPIC_LABELS[t] ?? t} (${cnt})`}
-              active={selectedTopic === t}
-              onClick={() => setSelectedTopic(t)}
-            />
-          );
-        })}
+      {/* Two-level filter */}
+      <div className="flex flex-col gap-2 mb-5">
+        {/* Category row */}
+        <div className="flex gap-2 flex-wrap">
+          <TopicBtn
+            label={`全部 (${words.length})`}
+            active={selectedCategory === "all"}
+            onClick={() => { setSelectedCategory("all"); setSelectedTopic("all"); }}
+          />
+          {TOPIC_CATEGORIES.map((cat) => {
+            const cnt = words.filter((w) => (cat.topics as readonly string[]).includes(w.topic)).length;
+            if (cnt === 0) return null;
+            return (
+              <TopicBtn
+                key={cat.label}
+                label={`${cat.label} (${cnt})`}
+                active={selectedCategory === cat.label}
+                onClick={() => { setSelectedCategory(cat.label); setSelectedTopic("all"); }}
+              />
+            );
+          })}
+        </div>
+        {/* Topic row */}
+        {visibleTopics.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap pl-1">
+            {visibleTopics.map((t) => {
+              const cnt = words.filter((w) => w.topic === t).length;
+              if (cnt === 0) return null;
+              return (
+                <TopicBtn
+                  key={t}
+                  label={`${TOPIC_LABELS[t] ?? t} (${cnt})`}
+                  active={selectedTopic === t}
+                  onClick={() => setSelectedTopic(selectedTopic === t ? "all" : t)}
+                  small
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Word table */}
@@ -169,11 +205,11 @@ export default function VocabularyPage() {
   );
 }
 
-function TopicBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function TopicBtn({ label, active, onClick, small }: { label: string; active: boolean; onClick: () => void; small?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-full text-xs transition-colors ${
+      className={`rounded-full text-xs transition-colors ${small ? "px-2 py-0.5" : "px-3 py-1"} ${
         active ? "bg-accent text-white" : "bg-surface text-muted hover:text-foreground"
       }`}
     >

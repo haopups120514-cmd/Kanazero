@@ -20,7 +20,7 @@ const NAV = [
   { href: "/expressions", icon: MessageSquare, label: "表达" },
   { href: "/review", icon: RotateCcw, label: "复习" },
   { href: "/vocabulary", icon: BookOpen, label: "词库" },
-  { href: "/bjt", icon: FileQuestion, label: "BJT" },
+  { href: "/bjt", icon: FileQuestion, label: "题库" },
   { href: "/stats", icon: BarChart2, label: "统计" },
   { href: "/settings", icon: Settings, label: "设置" },
 ];

@@ -12,6 +12,7 @@ import { romajiMatch } from "@/lib/romaji";
 import * as storage from "@/lib/storage";
 import { dueItems } from "@/lib/srs";
 import type { Expression } from "@/types";
+import { TOPIC_CATEGORIES } from "@/types";
 import { KeyboardHint } from "@/components/shared/KeyboardHint";
 import { Volume2, Plus, RefreshCw } from "lucide-react";
 
@@ -30,6 +31,8 @@ export default function ExpressionsPage() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
   const [mounted, setMounted] = useState(false);
+  const [showGenModal, setShowGenModal] = useState(false);
+  const [genTopic, setGenTopic] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -88,9 +91,10 @@ export default function ExpressionsPage() {
     }
   }, [phase, handleSubmit, handleNext]);
 
-  const handleGenerate = async () => {
-    const result = await generate({ type: "expressions", count: 5 });
+  const handleGenerate = async (topic?: string) => {
+    const result = await generate({ type: "expressions", count: 5, topic });
     if (result?.expressions) addExpressions(result.expressions);
+    setShowGenModal(false);
   };
 
   if (!mounted) return null;
@@ -103,11 +107,13 @@ export default function ExpressionsPage() {
           <div className="text-5xl">💬</div>
           <h2 className="text-xl font-bold text-foreground">情景表达练习</h2>
           <p className="text-muted text-sm">暂无表达题，先生成一批吧</p>
-          <Button onClick={handleGenerate} disabled={loading}>
+          <Button onClick={() => setShowGenModal(true)} disabled={loading}>
             {loading ? <LoadingSpinner size={16} /> : <Plus size={16} />}
             AI 生成表达题
           </Button>
         </div>
+        <GenModal show={showGenModal} loading={loading} topic={genTopic} onTopicChange={setGenTopic}
+          onConfirm={() => handleGenerate(genTopic || undefined)} onClose={() => setShowGenModal(false)} />
       </PageLayout>
     );
   }
@@ -141,12 +147,14 @@ export default function ExpressionsPage() {
             <Button onClick={handleStart}>
               {done ? "再练一遍" : "开始练习"}
             </Button>
-            <Button variant="outline" onClick={handleGenerate} disabled={loading}>
+            <Button variant="outline" onClick={() => setShowGenModal(true)} disabled={loading}>
               {loading ? <LoadingSpinner size={14} /> : <RefreshCw size={14} />}
               生成更多
             </Button>
           </div>
         </div>
+        <GenModal show={showGenModal} loading={loading} topic={genTopic} onTopicChange={setGenTopic}
+          onConfirm={() => handleGenerate(genTopic || undefined)} onClose={() => setShowGenModal(false)} />
       </PageLayout>
     );
   }
@@ -216,5 +224,52 @@ export default function ExpressionsPage() {
       )}
       <KeyboardHint />
     </PageLayout>
+  );
+}
+
+interface GenModalProps {
+  show: boolean;
+  loading: boolean;
+  topic: string;
+  onTopicChange: (t: string) => void;
+  onConfirm: () => void;
+  onClose: () => void;
+}
+
+function GenModal({ show, loading, topic, onTopicChange, onConfirm, onClose }: GenModalProps) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+      <div className="bg-bg-card border border-surface rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <h3 className="text-base font-bold text-foreground mb-4">AI 生成表达题</h3>
+        <div className="mb-5">
+          <label className="text-xs text-muted mb-1 block">场景分类（可选）</label>
+          <select
+            value={topic}
+            onChange={(e) => onTopicChange(e.target.value)}
+            className="w-full bg-surface border border-surface rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+          >
+            <option value="">随机多场景</option>
+            {TOPIC_CATEGORIES.map((cat) => (
+              <optgroup key={cat.label} label={cat.label}>
+                {cat.topics.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 px-3 py-2 text-sm text-muted hover:text-foreground transition-colors">取消</button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 px-3 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? "生成中…" : "生成 5 题"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

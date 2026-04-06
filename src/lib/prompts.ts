@@ -45,8 +45,11 @@ export function wordsPrompt(topic: string, level: string, count = 20): string {
 4. 严格返回JSON数组，无多余文字`;
 }
 
-export function expressionsPrompt(count = 5): string {
-  return `你是日语表达专家。请生成${count}道日语表达练习题，涵盖多种生活和职场场景。
+export function expressionsPrompt(count = 5, topic?: string): string {
+  const sceneDesc = topic
+    ? `专注于「${topic}」场景的日语表达`
+    : "涵盖多种生活和职场场景";
+  return `你是日语表达专家。请生成${count}道日语表达练习题，${sceneDesc}。
 
 严格按照以下JSON数组格式返回，不要返回任何其他内容：
 [
@@ -61,14 +64,21 @@ export function expressionsPrompt(count = 5): string {
 ]
 
 要求：
-1. 情景多样：涵盖日常会话、职场、购物、旅行等场景
-2. 表达地道，适当体现敬语
-3. romaji必须准确，全部小写
-4. acceptable_answers可以为空数组`;
+1. 情景贴合所选场景，表达地道，适当体现敬语
+2. romaji必须准确，全部小写
+3. acceptable_answers可以为空数组`;
 }
 
-export function bjtQuestionsPrompt(count = 5): string {
-  return `你是BJT商务日语出题专家。请生成${count}道BJT听読解パート的模拟题。
+export function bjtQuestionsPrompt(count = 5, examType = "BJT"): string {
+  const examContext: Record<string, string> = {
+    "BJT": "BJT商务日语考试的听読解パート，场景涵盖商务邮件、电话、会议、合同",
+    "JLPT N1": "JLPT N1级别，包含高级文法・读解・语言知识题，难度最高",
+    "JLPT N2": "JLPT N2级别，中高级文法・读解・语言知识题",
+    "JLPT N3": "JLPT N3级别，中级文法・读解・语言知识题，日常及职场场景",
+    "JPT": "JPT日语能力测试，含听力与阅读部分，商务和日常综合场景",
+  };
+  const context = examContext[examType] ?? `${examType}日语考试模拟题`;
+  return `你是${examType}考试出题专家。请生成${count}道模拟题，风格参考${context}。
 
 严格按照以下JSON数组格式返回，不要返回任何其他内容：
 [
@@ -90,7 +100,7 @@ export function bjtQuestionsPrompt(count = 5): string {
 ]
 
 要求：
-1. 场景真实，涵盖商务邮件、电话、会议、合同等场景
+1. 场景真实，符合${examType}考试风格
 2. 干扰项有迷惑性但明显区分
 3. 解析清晰，指出关键词或语法点`;
 }

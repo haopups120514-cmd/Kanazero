@@ -19,9 +19,9 @@ import { buildSession } from "@/lib/session";
 import * as storage from "@/lib/storage";
 import type { SessionStepType, SessionResult, BJTQuestion } from "@/types";
 import { KeyboardHint } from "@/components/shared/KeyboardHint";
-import { TOPICS } from "@/types";
+import { TOPICS, TOPIC_CATEGORIES } from "@/types";
 
-type Phase = "loading" | "practicing" | "result";
+type Phase = "loading" | "empty" | "practicing" | "result";
 
 const SESSION_KEY = "bjt_session_v1";
 
@@ -29,6 +29,7 @@ interface SavedSession {
   steps: SessionStepType[];
   stepIndex: number;
   startTime: number;
+  topic: string;
   accum: { wordsTyped: number; bjtAnswered: number; correct: number; wrong: number; totalWpm: number; wpmCount: number };
 }
 
@@ -49,7 +50,7 @@ function clearSession() {
 
 export default function PracticePage() {
   const router = useRouter();
-  const { words, addWords, recordResult: recordWordResult } = useWords();
+  const { words, recordResult: recordWordResult } = useWords();
   const { settings } = useSettings();
   const { generate, loading: genLoading } = useGenerate();
   const { recordActivity, updateStats, stats } = useProgress();
@@ -58,6 +59,7 @@ export default function PracticePage() {
   const [steps, setSteps] = useState<SessionStepType[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState("all");
   const sessionStartRef = useRef<number>(Date.now());
 
   const [bjtQuestions, setBjtQuestions] = useState<BJTQuestion[]>([]);
@@ -78,17 +80,34 @@ export default function PracticePage() {
   const typingTarget = currentWord?.romaji ?? "";
   const engine = useTypingEngine(typingTarget);
 
+  // Build and start a practice session from (optionally filtered) words
+  const startNewSession = useCallback((topicFilter: string, bq: BJTQuestion[]) => {
+    const allWords = storage.getWords();
+    if (allWords.length === 0) { setPhase("empty"); return; }
+    const filtered = topicFilter === "all" ? allWords : allWords.filter((w) => w.topic === topicFilter);
+    const wordsForSession = filtered.length > 0 ? filtered : allWords;
+    const session = buildSession(wordsForSession, bq);
+    if (session.length === 0) { setPhase("empty"); return; }
+    clearSession();
+    setSteps(session);
+    setStepIndex(0);
+    sessionStartRef.current = Date.now();
+    resultAccumRef.current = { wordsTyped: 0, bjtAnswered: 0, correct: 0, wrong: 0, totalWpm: 0, wpmCount: 0 };
+    setPhase("practicing");
+    pomStart();
+  }, [pomStart]);
+
   // Initialize — restore session if exists, otherwise start fresh
   useEffect(() => {
     async function init() {
-      const bq = storage.getBJTQuestions();
+      let bq = storage.getBJTQuestions();
       setBjtQuestions(bq);
 
       const saved = loadSession();
       if (saved && saved.steps.length > 0 && saved.stepIndex < saved.steps.length) {
-        // Restore saved session
         setSteps(saved.steps);
         setStepIndex(saved.stepIndex);
+        setSelectedTopic(saved.topic ?? "all");
         resultAccumRef.current = saved.accum;
         sessionStartRef.current = saved.startTime;
         setPhase("practicing");
@@ -96,34 +115,20 @@ export default function PracticePage() {
         return;
       }
 
-      // Fresh session
-      let w = storage.getWords();
-      if (w.length < 20) {
-        const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-        const result = await generate({ type: "words", topic, level: "J3", count: 20 });
-        if (result?.words) {
-          w = storage.addWords(result.words);
-          addWords(result.words);
-        }
-      }
-      let freshBQ = bq;
-      if (freshBQ.length < 5) {
+      // Check words — no auto-generation, guide to vocabulary if empty
+      const w = storage.getWords();
+      if (w.length === 0) { setPhase("empty"); return; }
+
+      // Auto-generate BJT questions if needed (topic-agnostic, always keep stocked)
+      if (bq.length < 5) {
         const result = await generate({ type: "bjt_questions", count: 5 });
         if (result?.bjtQuestions) {
-          freshBQ = storage.addBJTQuestions(result.bjtQuestions);
-          setBjtQuestions(freshBQ);
+          bq = storage.addBJTQuestions(result.bjtQuestions);
+          setBjtQuestions(bq);
         }
       }
 
-      const session = buildSession(w, freshBQ);
-      if (session.length === 0) { setPhase("result"); return; }
-
-      setSteps(session);
-      setStepIndex(0);
-      sessionStartRef.current = Date.now();
-      resultAccumRef.current = { wordsTyped: 0, bjtAnswered: 0, correct: 0, wrong: 0, totalWpm: 0, wpmCount: 0 };
-      setPhase("practicing");
-      pomStart();
+      startNewSession("all", bq);
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,9 +141,10 @@ export default function PracticePage() {
       steps,
       stepIndex,
       startTime: sessionStartRef.current,
+      topic: selectedTopic,
       accum: { ...resultAccumRef.current },
     });
-  }, [steps, stepIndex, phase]);
+  }, [steps, stepIndex, phase, selectedTopic]);
 
   // Reset engine on step change
   useEffect(() => {
@@ -233,8 +239,21 @@ export default function PracticePage() {
         <div className="flex flex-col items-center gap-4">
           <LoadingSpinner size={32} />
           <p className="text-muted text-sm">
-            {genLoading ? "AI 正在生成练习内容…" : "准备中…"}
+            {genLoading ? "AI 正在生成题目…" : "准备中…"}
           </p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (phase === "empty") {
+    return (
+      <PageLayout center maxWidth="sm">
+        <div className="text-center flex flex-col items-center gap-4">
+          <div className="text-5xl">📚</div>
+          <h2 className="text-xl font-bold text-foreground">词库为空</h2>
+          <p className="text-muted text-sm">请先去词库页生成单词，再回来练习</p>
+          <Button onClick={() => router.push("/vocabulary")}>去词库 →</Button>
         </div>
       </PageLayout>
     );
@@ -247,11 +266,8 @@ export default function PracticePage() {
           result={sessionResult}
           onContinue={() => {
             resultAccumRef.current = { wordsTyped: 0, bjtAnswered: 0, correct: 0, wrong: 0, totalWpm: 0, wpmCount: 0 };
-            const newSession = buildSession(storage.getWords(), storage.getBJTQuestions());
-            setSteps(newSession);
-            setStepIndex(0);
-            sessionStartRef.current = Date.now();
-            setPhase("practicing");
+            const bq = storage.getBJTQuestions();
+            startNewSession(selectedTopic, bq);
           }}
           onEnd={() => { clearSession(); router.push("/"); }}
         />
@@ -261,7 +277,23 @@ export default function PracticePage() {
 
   return (
     <PageLayout center maxWidth="md" noPadding>
-      <div className="w-full px-6 pt-6 pb-2">
+      {/* Topic selector */}
+      <div className="w-full px-6 pt-4 pb-0">
+        <div className="flex gap-1.5 flex-wrap">
+          <TopicPill label="全部" active={selectedTopic === "all"} onClick={() => setSelectedTopic("all")} />
+          {TOPIC_CATEGORIES.map((cat) =>
+            cat.topics.map((t) => {
+              const hasWords = words.some((w) => w.topic === t);
+              if (!hasWords) return null;
+              return (
+                <TopicPill key={t} label={t} active={selectedTopic === t} onClick={() => setSelectedTopic(t)} />
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <div className="w-full px-6 pt-3 pb-2">
         <SessionProgress steps={steps} currentIndex={stepIndex} />
       </div>
 
@@ -298,5 +330,18 @@ export default function PracticePage() {
       </div>
       <KeyboardHint />
     </PageLayout>
+  );
+}
+
+function TopicPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+        active ? "bg-accent text-white" : "bg-surface text-muted hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

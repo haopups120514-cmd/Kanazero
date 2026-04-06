@@ -8,21 +8,25 @@ import { useSpeech } from "@/hooks/useSpeech";
 import { useProgress } from "@/hooks/useProgress";
 import { dueItems } from "@/lib/srs";
 import type { Word } from "@/types";
+import { TOPIC_CATEGORIES } from "@/types";
 import { Volume2 } from "lucide-react";
 
-type Phase = "writing" | "result";
+interface Feedback {
+  correct: boolean;
+  correctAnswer: string;
+}
 
 export default function HandwritingPage() {
   const { words, recordResult } = useWords();
   const { settings } = useSettings();
-  const { speak, speaking } = useSpeech();
+  const { speak } = useSpeech();
   const { recordActivity } = useProgress();
 
+  const [selectedTopic, setSelectedTopic] = useState("all");
   const [queue, setQueue] = useState<Word[]>([]);
   const [index, setIndex] = useState(0);
-  const [phase, setPhase] = useState<Phase>("writing");
   const [input, setInput] = useState("");
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
   const [mounted, setMounted] = useState(false);
 
@@ -30,30 +34,49 @@ export default function HandwritingPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Rebuild queue when words or topic changes
   useEffect(() => {
-    if (!mounted || words.length === 0) return;
-    const due = dueItems(words.filter((w) => w.srsStage > 0));
-    const fresh = words.filter((w) => w.srsStage === 0);
+    if (!mounted) return;
+    const filtered = selectedTopic === "all" ? words : words.filter((w) => w.topic === selectedTopic);
+    const source = filtered.length > 0 ? filtered : words;
+    const due = dueItems(source.filter((w) => w.srsStage > 0));
+    const fresh = source.filter((w) => w.srsStage === 0);
     setQueue([...due, ...fresh]);
-  }, [words, mounted]);
+    setIndex(0);
+    setFeedback(null);
+    setInput("");
+  }, [words, mounted, selectedTopic]);
 
   const current = queue[index];
 
-  // Focus input & speak on new word
+  // Speak and focus on card change
   useEffect(() => {
     if (!current) return;
     speak(current.word);
     setTimeout(() => inputRef.current?.focus(), 150);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, current?.id]);
+  }, [index, current?.id]); // eslint-disable-line
+
+  // Auto-advance 1 second after correct answer
+  useEffect(() => {
+    if (!feedback?.correct) return;
+    const t = setTimeout(() => {
+      setInput("");
+      setFeedback(null);
+      if (index + 1 >= queue.length) {
+        setIndex(0);
+        setScore({ correct: 0, wrong: 0 });
+      } else {
+        setIndex((i) => i + 1);
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [feedback, index, queue.length]);
 
   const handleSubmit = useCallback(() => {
-    if (!current || !input.trim()) return;
+    if (!current || !input.trim() || feedback?.correct) return;
     const answer = input.trim();
-    // Accept kanji or kana reading
     const correct = answer === current.word || answer === current.kana;
-    setIsCorrect(correct);
-    setPhase("result");
+    setFeedback({ correct, correctAnswer: current.word });
     recordResult(current.id, correct);
     recordActivity(1);
     setScore((s) => ({
@@ -61,40 +84,34 @@ export default function HandwritingPage() {
       wrong: s.wrong + (correct ? 0 : 1),
     }));
     speak(current.word);
-  }, [current, input, recordResult, recordActivity, speak]);
-
-  const handleNext = useCallback(() => {
-    setInput("");
-    setPhase("writing");
-    if (index + 1 >= queue.length) {
-      setIndex(0);
-      setScore({ correct: 0, wrong: 0 });
-    } else {
-      setIndex((i) => i + 1);
+    if (!correct) {
+      // Wrong: clear input after showing the answer briefly, allow retry
+      setTimeout(() => {
+        setInput("");
+        setFeedback(null);
+        inputRef.current?.focus();
+      }, 1800);
     }
-  }, [index, queue.length]);
-
-  const handleRetry = () => {
-    setInput("");
-    setPhase("writing");
-    setTimeout(() => inputRef.current?.focus(), 150);
-  };
+  }, [current, input, feedback, recordResult, recordActivity, speak]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (phase === "writing") handleSubmit();
-      else handleNext();
+      handleSubmit();
     }
   };
 
   if (!mounted) return null;
 
-  if (queue.length === 0) {
+  const availableTopics = TOPIC_CATEGORIES.flatMap((c) => c.topics).filter((t) =>
+    words.some((w) => w.topic === t)
+  );
+
+  if (words.length === 0) {
     return (
       <PageLayout center maxWidth="sm">
         <div className="text-center flex flex-col items-center gap-4">
-          <div className="text-5xl">✍️</div>
+          <div className="text-5xl">✍</div>
           <h2 className="text-xl font-bold text-foreground">手写练习</h2>
           <p className="text-muted text-sm">词库还没有单词，先在词库页面生成一些吧</p>
         </div>
@@ -102,10 +119,31 @@ export default function HandwritingPage() {
     );
   }
 
+  if (queue.length === 0) {
+    return (
+      <PageLayout center maxWidth="sm">
+        <div className="text-center flex flex-col items-center gap-4">
+          <div className="text-5xl">✍</div>
+          <p className="text-muted text-sm">该分类暂无单词</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout center maxWidth="sm" noPadding>
-      {/* Header */}
-      <div className="w-full px-6 pt-6 pb-2 flex items-center justify-between">
+      {/* Topic selector */}
+      {availableTopics.length > 1 && (
+        <div className="w-full px-6 pt-4 pb-0 flex gap-1.5 flex-wrap">
+          <TopicPill label="全部" active={selectedTopic === "all"} onClick={() => setSelectedTopic("all")} />
+          {availableTopics.map((t) => (
+            <TopicPill key={t} label={t} active={selectedTopic === t} onClick={() => setSelectedTopic(t)} />
+          ))}
+        </div>
+      )}
+
+      {/* Progress row */}
+      <div className="w-full px-6 pt-3 pb-1 flex items-center justify-between">
         <span className="text-xs text-muted">{index + 1} / {queue.length}</span>
         {score.correct + score.wrong > 0 && (
           <span className="text-xs">
@@ -117,8 +155,8 @@ export default function HandwritingPage() {
       </div>
 
       {current && (
-        <div className="flex flex-col items-center gap-6 w-full px-6 pb-10 pt-2">
-          {/* Prompt */}
+        <div className="flex flex-col items-center gap-3 w-full px-6 pb-6 pt-1">
+          {/* Question card */}
           <div className="w-full bg-bg-card border border-surface rounded-2xl p-5 text-center">
             <p className="text-xs text-muted mb-1">{current.pos} · {current.topic}</p>
             <p className="text-3xl font-bold text-foreground mb-1">{current.meaning_zh}</p>
@@ -126,83 +164,78 @@ export default function HandwritingPage() {
               <span className="text-lg text-accent font-mono">{current.kana}</span>
               <button
                 onClick={() => speak(current.word)}
-                className={`p-1 rounded-lg transition-colors
-                  ${speaking ? "text-accent" : "text-muted hover:text-accent"}`}
+                className="text-muted/40 hover:text-accent transition-colors"
               >
                 <Volume2 size={16} />
               </button>
             </div>
-            {settings.showFurigana && phase === "result" && (
+            {settings.showFurigana && feedback && (
               <p className="text-4xl font-bold text-foreground mt-3">{current.word}</p>
             )}
           </div>
 
-          {/* Writing area */}
-          <div className="w-full">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="用 Apple Pencil 书写…"
-              rows={3}
-              disabled={phase === "result"}
-              className={`w-full bg-surface/40 border-2 rounded-2xl px-5 py-4 text-center font-serif text-4xl
-                text-foreground placeholder:text-muted/30 focus:outline-none transition-colors resize-none
-                leading-relaxed
-                ${phase === "result"
-                  ? isCorrect
-                    ? "border-success/60 bg-success/5"
-                    : "border-error/60 bg-error/5"
-                  : "border-surface focus:border-accent"
-                }`}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              autoCapitalize="none"
-            />
-          </div>
+          {/* Input area — compact height for iPad */}
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="用 Apple Pencil 书写…"
+            rows={2}
+            disabled={!!feedback?.correct}
+            className={`w-full bg-surface/40 border-2 rounded-2xl px-5 py-3 text-center font-serif text-4xl
+              text-foreground placeholder:text-muted/30 focus:outline-none transition-colors resize-none h-24
+              ${feedback
+                ? feedback.correct
+                  ? "border-success/60 bg-success/5"
+                  : "border-error/60 bg-error/5"
+                : "border-surface focus:border-accent"
+              }`}
+            autoComplete="off" autoCorrect="off" spellCheck={false} autoCapitalize="none"
+          />
 
-          {/* Result feedback */}
-          {phase === "result" && (
-            <div className={`w-full rounded-2xl px-5 py-3 border text-center
-              ${isCorrect ? "bg-success/10 border-success/30" : "bg-error/10 border-error/30"}`}
-            >
-              {isCorrect ? (
-                <p className="text-success font-medium">正确！</p>
-              ) : (
-                <p className="text-error font-medium">
-                  正确答案：<span className="font-serif text-xl">{current.word}</span>
-                </p>
-              )}
+          {/* Inline feedback — below textarea, above submit */}
+          {feedback && (
+            <div className={`w-full rounded-xl px-4 py-2.5 text-center border text-sm
+              ${feedback.correct
+                ? "bg-success/10 border-success/30 text-success"
+                : "bg-error/10 border-error/30 text-error"
+              }`}>
+              {feedback.correct
+                ? "正解！自动跳转…"
+                : <>正确答案：<span className="font-serif text-xl">{feedback.correctAnswer}</span></>
+              }
             </div>
           )}
 
-          {/* Actions */}
-          {phase === "writing" && (
-            <Button onClick={handleSubmit} size="lg" className="w-full max-w-xs" disabled={!input.trim()}>
+          {/* Submit button — fixed below textarea, no scrolling needed */}
+          {!feedback?.correct && (
+            <Button
+              onClick={handleSubmit}
+              size="lg"
+              className="w-full max-w-xs"
+              disabled={!input.trim()}
+            >
               提交
             </Button>
           )}
 
-          {phase === "result" && (
-            <div className="flex gap-3 w-full max-w-xs">
-              {!isCorrect && (
-                <Button variant="outline" onClick={handleRetry} className="flex-1">
-                  再写一次
-                </Button>
-              )}
-              <Button onClick={handleNext} className="flex-1">
-                {index + 1 >= queue.length ? "完成 →" : "下一个 →"}
-              </Button>
-            </div>
-          )}
-
-          {phase === "writing" && (
-            <p className="text-xs text-muted/40">根据读音写出汉字，Enter 提交</p>
-          )}
+          <p className="text-xs text-muted/40">根据读音写出汉字，Enter 提交</p>
         </div>
       )}
     </PageLayout>
+  );
+}
+
+function TopicPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+        active ? "bg-accent text-white" : "bg-surface text-muted hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

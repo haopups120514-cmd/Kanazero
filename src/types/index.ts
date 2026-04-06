@@ -41,6 +41,7 @@ export interface Expression {
 export interface BJTQuestion {
   id: string;
   type: "listening_reading" | "reading" | "expression";
+  examType?: string;       // "BJT" | "JLPT N1" | "JLPT N2" | "JLPT N3" | "JPT"
   scenario_ja: string;
   scenario_zh: string;
   question_ja: string;
@@ -52,6 +53,9 @@ export interface BJTQuestion {
   correct?: boolean;
   createdAt: number;
 }
+
+export const EXAM_TYPES = ["BJT", "JLPT N1", "JLPT N2", "JLPT N3", "JPT"] as const;
+export type ExamType = typeof EXAM_TYPES[number];
 
 // ─── SRS Review Item ─────────────────────────────────────────────────────────
 

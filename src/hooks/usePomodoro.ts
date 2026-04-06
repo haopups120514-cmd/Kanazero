@@ -10,6 +10,20 @@ export function usePomodoro(minutes = 15) {
   const startTimeRef = useRef<number | null>(null);
   const pausedAtRef = useRef<number>(totalSeconds);
   const rafRef = useRef<number>(0);
+  const statusRef = useRef<PomodoroStatus>("idle");
+
+  // Keep statusRef in sync so effects can read it without stale closure
+  useEffect(() => { statusRef.current = status; }, [status]);
+
+  // When totalSeconds changes (user updated settings), reset if idle
+  useEffect(() => {
+    if (statusRef.current === "idle") {
+      cancelAnimationFrame(rafRef.current);
+      startTimeRef.current = null;
+      pausedAtRef.current = totalSeconds;
+      setRemaining(totalSeconds);
+    }
+  }, [totalSeconds]);
 
   const tick = useCallback(() => {
     if (startTimeRef.current === null) return;
@@ -18,6 +32,7 @@ export function usePomodoro(minutes = 15) {
     setRemaining(left);
     if (left <= 0) {
       setStatus("done");
+      statusRef.current = "done";
       return;
     }
     rafRef.current = requestAnimationFrame(tick);

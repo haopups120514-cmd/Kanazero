@@ -8,6 +8,7 @@ interface GenerateOptions {
   topic?: string;
   level?: string;
   count?: number;
+  examType?: string;
 }
 
 interface GenerateResult {

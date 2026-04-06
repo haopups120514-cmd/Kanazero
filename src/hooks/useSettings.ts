@@ -9,13 +9,17 @@ export function useSettings() {
 
   useEffect(() => {
     setLocalSettings(getSettings());
+
+    const handleChange = () => setLocalSettings(getSettings());
+    window.addEventListener("kz-settings-changed", handleChange);
+    return () => window.removeEventListener("kz-settings-changed", handleChange);
   }, []);
 
   const update = useCallback((patch: Partial<Settings>) => {
-    const updated = { ...settings, ...patch };
+    const updated = { ...getSettings(), ...patch };
     setSettings(updated);
     setLocalSettings(updated);
-  }, [settings]);
+  }, []);
 
   return { settings, update };
 }

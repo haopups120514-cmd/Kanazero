@@ -112,6 +112,9 @@ export function getSettings(): Settings {
 
 export function setSettings(s: Settings): void {
   set(KEYS.SETTINGS, s);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("kz-settings-changed"));
+  }
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
