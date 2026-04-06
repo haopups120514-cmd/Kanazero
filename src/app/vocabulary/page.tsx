@@ -146,7 +146,7 @@ export default function VocabularyPage() {
                     <span className="text-muted text-xs ml-2 font-jp">{w.kana}</span>
                   </td>
                   <td className="px-4 py-2.5 hidden sm:table-cell font-mono text-muted text-xs">{w.romaji}</td>
-                  <td className="px-4 py-2.5 text-foreground/80">{w.meaning_zh}</td>
+                  <td className="px-4 py-2.5 text-foreground/80">{w.meaning_zh[0]}</td>
                   <td className="px-4 py-2.5 hidden md:table-cell"><LevelBadge level={w.level} /></td>
                   <td className="px-4 py-2.5"><SrsBadge stage={w.srsStage} /></td>
                   <td className="px-4 py-2.5 hidden lg:table-cell text-muted text-xs">{formatNextReview(w.nextReview)}</td>

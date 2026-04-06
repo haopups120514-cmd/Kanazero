@@ -32,7 +32,7 @@ export function WordCard({
     <div className="flex flex-col items-center gap-4 text-center">
       {/* Meaning + badges */}
       <div className="flex items-center gap-2 flex-wrap justify-center">
-        <span className="text-lg text-foreground font-medium">{word.meaning_zh}</span>
+        <span className="text-lg text-foreground font-medium">{word.meaning_zh.join(" / ")}</span>
         <PosBadge pos={word.pos} />
         <LevelBadge level={word.level} />
       </div>

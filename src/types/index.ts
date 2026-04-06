@@ -7,7 +7,7 @@ export interface Word {
   word: string;           // 会議
   kana: string;           // かいぎ
   romaji: string;         // kaigi
-  meaning_zh: string;     // 会议
+  meaning_zh: string[];   // ["会议", "开会"] — 多个可接受的中文释义
   pos: string;            // 名詞
   example_ja: string;
   example_zh: string;

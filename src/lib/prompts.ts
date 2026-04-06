@@ -30,7 +30,7 @@ export function wordsPrompt(topic: string, level: string, count = 20): string {
     "word": "日语写法（汉字或假名）",
     "kana": "平假名读音",
     "romaji": "罗马字拼写（小写，单词间用空格分隔）",
-    "meaning_zh": "中文释义（简洁）",
+    "meaning_zh": ["主要中文释义", "同义说法2", "同义说法3"],
     "pos": "词性（名詞/動詞/形容詞/副詞/表現）",
     "example_ja": "一个自然的例句（日语）",
     "example_zh": "例句中文翻译",
@@ -40,9 +40,10 @@ export function wordsPrompt(topic: string, level: string, count = 20): string {
 
 确保：
 1. romaji是标准Hepburn式罗马字，全部小写
-2. 例句自然地体现主题场景
-3. 不同词性均有覆盖
-4. 严格返回JSON数组，无多余文字`;
+2. meaning_zh必须是数组，提供3-5个常见中文释义变体，例如「大丈夫」→["没关系","没问题","不要紧","没事"]
+3. 例句自然地体现主题场景
+4. 不同词性均有覆盖
+5. 严格返回JSON数组，无多余文字`;
 }
 
 export function expressionsPrompt(count = 5, topic?: string): string {

@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
       const items = parseJSON<Omit<Word, "id" | "topic" | "srsStage" | "nextReview" | "lastReview" | "correctCount" | "wrongCount" | "createdAt">[]>(raw);
       const words: Word[] = items.map((item) => ({
         ...item,
+        // Normalize: ensure meaning_zh is always an array (Claude may return string)
+        meaning_zh: Array.isArray(item.meaning_zh)
+          ? item.meaning_zh
+          : [item.meaning_zh as unknown as string],
         id: nanoid(),
         topic: topic,
         srsStage: 0,
@@ -174,6 +178,19 @@ ${question.scenario_ja}
 
       const text = await callClaude(client, prompt);
       return NextResponse.json({ correction: text });
+    }
+
+    // ── 中文回答判定：AI 判断日→中模式的作答是否正确 ──────────────────────────
+    if (type === "chinese_judgment") {
+      const { wordJa, wordKana, userInput } = body as {
+        wordJa: string;
+        wordKana: string;
+        userInput: string;
+      };
+      const prompt = `判断任务：日语单词「${wordJa}」（${wordKana}），用户写出了中文「${userInput}」。请判断这个中文回答是否正确表达了这个日语单词的含义。只回答"正确"或"错误"，不要任何其他内容。`;
+      const result = await callClaude(client, prompt, SONNET_MODEL, 20);
+      const correct = result.trim().startsWith("正确");
+      return NextResponse.json({ correct });
     }
 
     return NextResponse.json({ error: "Unknown type" }, { status: 400 });

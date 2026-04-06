@@ -41,3 +41,21 @@ export function matchJapanese(input: string, targets: string[]): boolean {
     return nt === n || hiraToKata(nt) === nKata || kataToHira(nt) === nHira;
   });
 }
+
+/** Normalize Chinese text for comparison — strip spaces and punctuation */
+export function normalizeChinese(s: string): string {
+  return s.trim().replace(/[\s　，。、！？…·／/\\（）()【】「」『』～~]/g, "");
+}
+
+/**
+ * Match user Chinese input against an array of accepted meaning strings.
+ * Uses exact match and inclusion match (handles partial/abbreviated answers).
+ */
+export function matchChinese(input: string, meanings: string[]): boolean {
+  const n = normalizeChinese(input);
+  if (!n) return false;
+  return meanings.some((m) => {
+    const nm = normalizeChinese(m);
+    return nm === n || nm.includes(n) || n.includes(nm);
+  });
+}

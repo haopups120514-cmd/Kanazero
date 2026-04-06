@@ -33,7 +33,14 @@ function set<T>(key: string, value: T): void {
 // ─── Words ────────────────────────────────────────────────────────────────────
 
 export function getWords(): Word[] {
-  return get<Word[]>(KEYS.WORDS, []);
+  const raw = get<Word[]>(KEYS.WORDS, []);
+  // Migrate: old data had meaning_zh as a string; ensure it's always an array
+  return raw.map((w) => ({
+    ...w,
+    meaning_zh: Array.isArray(w.meaning_zh)
+      ? w.meaning_zh
+      : [w.meaning_zh as unknown as string],
+  }));
 }
 
 export function setWords(words: Word[]): void {

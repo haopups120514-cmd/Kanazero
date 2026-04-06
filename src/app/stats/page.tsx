@@ -104,7 +104,7 @@ export default function StatsPage() {
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="font-jp font-bold text-foreground flex-shrink-0">{w.word}</span>
                   <span className="text-muted text-xs flex-shrink-0">{w.kana}</span>
-                  <span className="text-muted/50 text-xs truncate">{w.meaning_zh}</span>
+                  <span className="text-muted/50 text-xs truncate">{w.meaning_zh[0]}</span>
                 </div>
                 <span className="text-error text-xs font-mono flex-shrink-0">错 {w.wrongCount} 次</span>
               </div>
