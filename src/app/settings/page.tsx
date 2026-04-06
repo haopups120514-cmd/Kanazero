@@ -11,14 +11,12 @@ import type { Settings } from "@/types";
 import { TOPIC_CATEGORIES } from "@/types";
 import { Save, Trash2, Upload, Download, RefreshCw, Copy, Check, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { useSpeech, VOICEVOX_SPEAKERS } from "@/hooks/useSpeech";
 
 export default function SettingsPage() {
   const { settings, update } = useSettings();
   const { words, clearAll } = useWords();
   const { generateCode, push, pull, status: syncStatus, errorMsg, isConfigured } = useSync();
   const { isDark, toggle: toggleTheme } = useTheme();
-  const { speak } = useSpeech();
 
   const [form, setForm] = useState<Settings>(settings);
   const [saved, setSaved] = useState(false);
@@ -211,30 +209,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        </Section>
-
-        {/* VoiceVox speaker */}
-        <Section title="语音声优 (VoiceVox)">
-          <p className="text-xs text-muted mb-3">使用 VoiceVox 高质量日语语音合成，自动缓存已播放的音频</p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {VOICEVOX_SPEAKERS.map((s) => (
-              <Chip
-                key={s.id}
-                label={s.name}
-                active={form.voicevoxSpeaker === s.id}
-                onClick={() => setForm({ ...form, voicevoxSpeaker: s.id })}
-              />
-            ))}
-          </div>
-          <button
-            onClick={() => {
-              const url = `https://deprecatedapis.tts.quest/v2/voicevox/audio/?text=${encodeURIComponent("日本語")}&key=voicevox&speaker=${form.voicevoxSpeaker}`;
-              new Audio(url).play().catch(() => speak("日本語"));
-            }}
-            className="text-xs text-accent hover:text-accent/80 transition-colors underline underline-offset-2"
-          >
-            试听当前声优
-          </button>
         </Section>
 
         {/* Preferred topics */}

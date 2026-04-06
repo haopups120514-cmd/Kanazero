@@ -109,7 +109,6 @@ export interface Settings {
   preferredTopics: string[];
   fontSize: "sm" | "md" | "lg";
   syncCode: string;
-  voicevoxSpeaker: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -120,7 +119,6 @@ export const DEFAULT_SETTINGS: Settings = {
   preferredTopics: [],
   fontSize: "md",
   syncCode: "",
-  voicevoxSpeaker: 1,
 };
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
