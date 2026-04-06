@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import { JetBrains_Mono } from "next/font/google";
+import { AuthGate } from "@/components/AuthGate";
 import "./globals.css";
 
 const notoSansJP = Noto_Sans_JP({
@@ -44,11 +45,14 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${notoSansJP.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased">
-        {children}
+        <AuthGate>
+          {children}
+        </AuthGate>
         <script dangerouslySetInnerHTML={{
           __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
         }} />
       </body>
+
     </html>
   );
 }
