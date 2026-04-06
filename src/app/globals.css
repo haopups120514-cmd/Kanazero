@@ -3,25 +3,80 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-hover: #0f3460;
+  --accent: #7c85ff;
+  --accent-dim: #4a54cc;
+  --accent-glow: #a5acff;
+  --success: #4ade80;
+  --error: #f87171;
+  --muted: #6b7280;
+  --surface: #1e2040;
+  --foreground: #e8e8f0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
+  background-color: var(--bg);
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jp), "Noto Sans JP", system-ui, sans-serif;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Typing area uses monospace */
+.font-typing {
+  font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+}
+
+/* Hidden input for capturing keystrokes */
+.typing-capture {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+/* Char states in typing engine */
+.char-pending  { color: #6b7280; }
+.char-correct  { color: var(--success); }
+.char-wrong    { color: var(--error); }
+.char-current  { color: var(--foreground); border-bottom: 2px solid var(--accent); }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .bg-card {
+    background-color: var(--bg-card);
+  }
+  .border-surface {
+    border-color: var(--surface);
   }
 }

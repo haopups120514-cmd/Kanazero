@@ -1,0 +1,13 @@
+{
+  "name": "KanaZero",
+  "short_name": "KanaZero",
+  "description": "ゼロから始める日本語タイピング学習",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#7c85ff",
+  "orientation": "any",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
