@@ -209,7 +209,7 @@ export default function HandwritingPage() {
 
   return (
     <PageLayout maxWidth="sm" noPadding>
-      <div className="flex flex-col items-center w-full px-6 pt-[18vh] pb-16 gap-3">
+      <div className="flex flex-col items-center w-full px-6 pt-[10vh] pb-16 gap-3">
 
         {/* Mode switcher */}
         <div className="w-full flex gap-2 mb-1">
@@ -316,48 +316,48 @@ export default function HandwritingPage() {
               )}
             </div>
 
-            {/* Handwriting input — canvas-style */}
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={mode === 3 ? "写出中文意思…" : "在此书写…"}
-              disabled={!!feedback?.correct || aiChecking}
-              lang={mode === 3 ? "zh" : "ja"}
-              className={`w-full bg-bg-card border-2 border-dashed rounded-2xl p-4 text-center font-jp text-5xl
-                text-foreground placeholder:text-muted/20 focus:outline-none transition-colors resize-none h-40
-                ${aiChecking ? "opacity-60" : ""}
-                ${feedback
-                  ? feedback.correct
-                    ? "border-success/60 bg-success/5"
-                    : "border-error/60 bg-error/5"
-                  : "border-surface/50 focus:border-accent/50"
-                }`}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-
-            {/* Two submit buttons */}
-            <div className="w-full flex gap-3">
+            {/* Handwriting canvas row: [提交 | textarea | 提交] */}
+            <div className="w-full flex items-stretch gap-2">
               <button
                 onClick={handleSubmit}
                 disabled={!input.trim() || !!feedback?.correct || aiChecking}
-                className="flex-1 py-4 bg-accent text-white rounded-2xl text-sm font-medium
-                  disabled:opacity-40 transition-all hover:bg-accent-dim active:scale-[0.98]
-                  flex items-center justify-center gap-2"
+                className="flex-none w-14 flex flex-col items-center justify-center gap-0.5
+                  bg-accent text-white rounded-2xl text-xs font-medium
+                  disabled:opacity-40 transition-all hover:bg-accent-dim active:scale-[0.98]"
               >
-                {aiChecking ? <><LoadingSpinner size={14} />验证中…</> : "提交"}
+                {aiChecking ? <LoadingSpinner size={14} /> : <><span>提</span><span>交</span></>}
               </button>
+
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={mode === 3 ? "写出中文意思…" : "在此书写…"}
+                disabled={!!feedback?.correct || aiChecking}
+                lang={mode === 3 ? "zh" : "ja"}
+                className={`flex-1 bg-bg-card border-2 border-dashed rounded-2xl p-4 text-center font-jp text-5xl
+                  text-foreground placeholder:text-muted/20 focus:outline-none transition-colors resize-none h-40
+                  ${aiChecking ? "opacity-60" : ""}
+                  ${feedback
+                    ? feedback.correct
+                      ? "border-success/60 bg-success/5"
+                      : "border-error/60 bg-error/5"
+                    : "border-surface/50 focus:border-accent/50"
+                  }`}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+
               <button
                 onClick={handleSubmit}
                 disabled={!input.trim() || !!feedback?.correct || aiChecking}
-                className="flex-1 py-4 bg-accent text-white rounded-2xl text-sm font-medium
-                  disabled:opacity-40 transition-all hover:bg-accent-dim active:scale-[0.98]
-                  flex items-center justify-center gap-2"
+                className="flex-none w-14 flex flex-col items-center justify-center gap-0.5
+                  bg-accent text-white rounded-2xl text-xs font-medium
+                  disabled:opacity-40 transition-all hover:bg-accent-dim active:scale-[0.98]"
               >
-                {aiChecking ? <><LoadingSpinner size={14} />验证中…</> : "提交"}
+                {aiChecking ? <LoadingSpinner size={14} /> : <><span>提</span><span>交</span></>}
               </button>
             </div>
 
