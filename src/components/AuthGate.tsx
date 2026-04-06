@@ -12,6 +12,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (window.location.pathname === "/setup") { setState("verified"); return; }
     const verified = localStorage.getItem(AUTH_KEY);
     setState(verified === "1" ? "verified" : "locked");
   }, []);
