@@ -131,7 +131,7 @@ export default function SettingsPage() {
         {/* API Key */}
         <Section title="Anthropic API Key">
           <p className="text-xs text-muted mb-2">
-            应用默认使用服务端的 API Key。如需使用自己的 Key，请填入（仅存本地）。
+            AI 功能已可直接使用，无需填写。如果你有自己的 Key 想单独使用，可以填入（仅存本地，不会上传）。
           </p>
           <input
             type="password"
