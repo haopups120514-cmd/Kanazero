@@ -64,7 +64,7 @@ export function BJTQuestionCard({
     <div className="flex flex-col gap-5 w-full">
       {/* Type label */}
       <div className="text-xs text-muted uppercase tracking-widest text-center">
-        BJT 模拟题
+        {question.examType ?? "BJT"} · {question.type === "grammar" ? "语法" : question.type === "vocabulary" ? "词汇" : "阅读理解"}
       </div>
 
       {/* Scenario */}

@@ -71,22 +71,64 @@ export function expressionsPrompt(count = 5, topic?: string): string {
 }
 
 export function bjtQuestionsPrompt(count = 5, examType = "BJT"): string {
-  const examContext: Record<string, string> = {
-    "BJT": "BJT商务日语考试的听読解パート，场景涵盖商务邮件、电话、会议、合同",
-    "JLPT N1": "JLPT N1级别，包含高级文法・读解・语言知识题，难度最高",
-    "JLPT N2": "JLPT N2级别，中高级文法・读解・语言知识题",
-    "JLPT N3": "JLPT N3级别，中级文法・读解・语言知识题，日常及职场场景",
-    "JPT": "JPT日语能力测试，含听力与阅读部分，商务和日常综合场景",
+  type ExamConfig = { context: string; style: string; typeExample: string; typeNote: string; extraReq: string };
+  const configs: Record<string, ExamConfig> = {
+    "BJT": {
+      context: "BJT商务日语考试，场景涵盖商务邮件、电话、会议、合同、敬语",
+      style: "给出2-4句商务场景（邮件/会话/公告），然后针对场景提问（正确理解、判断、或选出合适回应）",
+      typeExample: "listening_reading",
+      typeNote: "type固定为 listening_reading",
+      extraReq: "场景必须体现商务敬语和职场礼仪，选项包含敬语差异或语义细微差别",
+    },
+    "JLPT N1": {
+      context: "JLPT N1日语能力测试，高级语法・词汇・读解，难度最高",
+      style: "混合出题：语法填空（文中___に入る最もよいものを選べ）、词义选择（___の意味に最も近いものを選べ）、读解理解。语法题的scenario_ja是含___的完整句子，question_ja是「（　）に何を入れますか」",
+      typeExample: "grammar",
+      typeNote: "type按题型填写：语法题填 grammar，词汇题填 vocabulary，读解题填 reading",
+      extraReq: "语法题使用N1高级文型（〜にもかかわらず、〜をもって、〜いかんにかかわらず等），词汇题选N1程度汉语词或四字熟语",
+    },
+    "JLPT N2": {
+      context: "JLPT N2日语能力测试，中高级语法・词汇・读解",
+      style: "混合出题：语法填空、词义选择、读解理解。语法题的scenario_ja是含___的完整句子，question_ja是「（　）に何を入れますか」",
+      typeExample: "grammar",
+      typeNote: "type按题型填写：语法题填 grammar，词汇题填 vocabulary，读解题填 reading",
+      extraReq: "语法题使用N2文型（〜に対して、〜によって、〜わけにはいかない等），难度适中",
+    },
+    "JLPT N3": {
+      context: "JLPT N3日语能力测试，中级语法・词汇・读解，日常和职场场景",
+      style: "语法填空、词义选择、简短会话理解。语法题的scenario_ja是含___的完整句子，question_ja是「（　）に何を入れますか」",
+      typeExample: "grammar",
+      typeNote: "type按题型填写：语法题填 grammar，词汇题填 vocabulary，读解题填 reading",
+      extraReq: "使用N3常用文型（〜てしまう、〜ために、〜ようにする等），贴近日常生活",
+    },
+    "JPT": {
+      context: "JPT日语能力测试，综合阅读・语法・商务日常场景",
+      style: "读解理解、语法选择、商务/日常场景填空混合出题",
+      typeExample: "reading",
+      typeNote: "type按题型填写：读解题填 reading，语法题填 grammar",
+      extraReq: "JPT注重实用性，兼顾商务场景和日常表达",
+    },
   };
-  const context = examContext[examType] ?? `${examType}日语考试模拟题`;
-  return `你是${examType}考试出题专家。请生成${count}道模拟题，风格参考${context}。
+
+  const cfg = configs[examType] ?? {
+    context: `${examType}日语考试`,
+    style: "综合阅读理解和语法题",
+    typeExample: "reading",
+    typeNote: "type填 reading 或 grammar",
+    extraReq: "",
+  };
+
+  return `你是${examType}考试出题专家。请严格按照${examType}考试风格，生成${count}道高质量模拟题。
+
+考试背景：${cfg.context}
+出题风格：${cfg.style}
 
 严格按照以下JSON数组格式返回，不要返回任何其他内容：
 [
   {
-    "type": "listening_reading",
-    "scenario_ja": "场景描述（2-3句日语）",
-    "scenario_zh": "场景中文翻译",
+    "type": "${cfg.typeExample}",
+    "scenario_ja": "题目材料/场景/含___的语法句（日语）",
+    "scenario_zh": "材料中文翻译（简短）",
     "question_ja": "问题（日语）",
     "question_zh": "问题（中文）",
     "options": [
@@ -96,12 +138,15 @@ export function bjtQuestionsPrompt(count = 5, examType = "BJT"): string {
       {"label": "D", "text_ja": "选项日语", "text_zh": "选项中文"}
     ],
     "answer": "正确选项label（A/B/C/D）",
-    "explanation_zh": "解析（为何这个选项正确）"
+    "explanation_zh": "解析：点明关键语法点/词义区别/考点，100字以内"
   }
 ]
 
 要求：
-1. 场景真实，符合${examType}考试风格
-2. 干扰项有迷惑性但明显区分
-3. 解析清晰，指出关键词或语法点`;
+1. 题目难度、场景、用词严格符合${examType}考试标准
+2. ${cfg.typeNote}
+3. ${cfg.extraReq}
+4. 干扰项有迷惑性（形似但义不同，或语法相近但用法不同）
+5. 每道题答案唯一且明确，解析指出关键考点
+6. 只返回JSON数组，不要任何多余文字`;
 }

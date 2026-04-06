@@ -149,17 +149,27 @@ ${fileContent.slice(0, 8000)}
       return NextResponse.json({ bjtQuestions });
     }
 
-    // ── BJT 错误纠正：AI 老师点评 ──────────────────────────────────────────
+    // ── 错误纠正：AI 老师点评 ──────────────────────────────────────────────────
     if (type === "bjt_correction") {
       const { question, wrongLabel } = body as {
         question: BJTQuestion;
         wrongLabel: string;
       };
+      const examTypeName = question.examType ?? "BJT";
+      const teacherDesc: Record<string, string> = {
+        "BJT":      "BJT商务日语考试辅导老师，擅长商务敬语、职场表达和商务场景理解",
+        "JLPT N1":  "JLPT N1辅导老师，擅长高级语法辨析和文章深层理解",
+        "JLPT N2":  "JLPT N2辅导老师，擅长中高级语法点解析和词汇辨析",
+        "JLPT N3":  "JLPT N3辅导老师，擅长中级语法和日常场景表达",
+        "JPT":      "JPT日语测试辅导老师，擅长综合阅读理解和商务场景日语",
+      };
+      const teacher = teacherDesc[examTypeName] ?? `${examTypeName}考试辅导老师`;
       const wrongOpt = question.options.find((o) => o.label === wrongLabel);
       const rightOpt = question.options.find((o) => o.label === question.answer);
-      const prompt = `你是一位耐心的BJT商务日语老师。学生刚刚做错了一道题，请用温和的语气纠正他，帮助他真正理解。
+      const prompt = `你是一位耐心的${teacher}。学生刚刚做错了一道${examTypeName}模拟题，请用温和的语气纠正他，帮助他真正理解这道题的考点。
 
-【题目场景】
+【题目类型】${question.type}（${examTypeName}）
+【题目材料】
 ${question.scenario_ja}
 （${question.scenario_zh}）
 
@@ -171,10 +181,10 @@ ${question.scenario_ja}
 【题目解析】${question.explanation_zh}
 
 请做到：
-1. 先简短肯定学生的思路（找到他为什么选错的可能原因）
-2. 解释正确答案的语法/表达要点
-3. 给一个类似的记忆口诀或联想方法（如果有）
-4. 全部用中文，200字以内，轻松易懂的语气`;
+1. 简短指出学生可能的误解方向（结合${examTypeName}考试特点）
+2. 解释正确答案的语法/词义/场景要点
+3. 给一个便于记忆的口诀或类比（如果有）
+4. 全部用中文，200字以内，语气轻松易懂`;
 
       const text = await callClaude(client, prompt);
       return NextResponse.json({ correction: text });
