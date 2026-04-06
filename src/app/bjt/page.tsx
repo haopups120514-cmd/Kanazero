@@ -44,7 +44,9 @@ export default function QuestionBankPage() {
     setShowTranslation(true);
     const targetId = questions[current]?.id;
     const updated = allQuestions.map((q) =>
-      q.id === targetId ? { ...q, done: true, correct: label === q.answer } : q
+      q.id === targetId
+        ? { ...q, done: true, correct: label === q.answer, selectedLabel: label }
+        : q
     );
     storage.setBJTQuestions(updated);
     setAllQuestions(updated);
@@ -211,7 +213,7 @@ export default function QuestionBankPage() {
                 key={q.id}
                 onClick={() => {
                   setCurrent(i);
-                  setSelected(q.done ? q.answer : undefined);
+                  setSelected(q.done ? (q.selectedLabel ?? q.answer) : undefined);
                   setShowResult(q.done);
                 }}
                 className={`w-7 h-7 rounded text-xs font-mono transition-colors ${

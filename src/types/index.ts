@@ -51,6 +51,7 @@ export interface BJTQuestion {
   explanation_zh: string;
   done: boolean;
   correct?: boolean;
+  selectedLabel?: string;   // what the user actually chose
   createdAt: number;
 }
 
