@@ -209,27 +209,7 @@ export default function HandwritingPage() {
 
   return (
     <PageLayout maxWidth="sm" noPadding>
-      <div className="flex flex-col items-center w-full px-6 pt-[10vh] pb-16 gap-3">
-
-        {/* Mode switcher */}
-        <div className="w-full flex gap-2 mb-1">
-          {([1, 2, 3] as HandwritingMode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all
-                ${mode === m
-                  ? "bg-accent text-white shadow-sm"
-                  : "bg-surface text-muted hover:text-foreground"
-                }`}
-            >
-              <div>{MODE_LABELS[m].label}</div>
-              <div className={`text-[10px] mt-0.5 ${mode === m ? "text-white/70" : "text-muted/60"}`}>
-                {MODE_LABELS[m].desc}
-              </div>
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col items-center w-full px-6 pt-4 pb-4 gap-3 min-h-[calc(100dvh-56px)]">
 
         {/* Topic selector */}
         {availableTopics.length > 1 && (
@@ -258,24 +238,17 @@ export default function HandwritingPage() {
             {/* Question card — content varies by mode */}
             <div className="w-full bg-bg-card border border-surface rounded-2xl p-5 text-center">
               {mode === 1 && (
-                /* 辅助模式: show everything — meaning, kanji, kana */
                 <>
                   <p className="text-xs text-muted mb-2">{current.pos} · {current.topic}</p>
                   <p className="text-lg text-foreground font-medium mb-2">
                     {current.meaning_zh.join(" / ")}
                   </p>
                   <p className="font-jp text-4xl font-bold text-foreground mb-1">{current.word}</p>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-base text-accent/80 font-jp">{current.kana}</span>
-                    <button onClick={() => speak(current.word)} className="text-muted/40 hover:text-accent transition-colors">
-                      <Volume2 size={14} />
-                    </button>
-                  </div>
+                  <span className="text-base text-accent/80 font-jp">{current.kana}</span>
                 </>
               )}
 
               {mode === 2 && (
-                /* 中→日: show Chinese only */
                 <>
                   <p className="text-xs text-muted mb-3">{current.pos} · {current.topic}</p>
                   <p className="text-3xl font-bold text-foreground">{current.meaning_zh[0]}</p>
@@ -285,28 +258,17 @@ export default function HandwritingPage() {
                   {settings.showFurigana && feedback && (
                     <div className="mt-3 pt-3 border-t border-surface/40">
                       <p className="font-jp text-4xl font-bold text-foreground">{current.word}</p>
-                      <div className="flex items-center justify-center gap-2 mt-1">
-                        <span className="text-sm text-accent/80 font-jp">{current.kana}</span>
-                        <button onClick={() => speak(current.word)} className="text-muted/40 hover:text-accent transition-colors">
-                          <Volume2 size={14} />
-                        </button>
-                      </div>
+                      <span className="text-sm text-accent/80 font-jp">{current.kana}</span>
                     </div>
                   )}
                 </>
               )}
 
               {mode === 3 && (
-                /* 日→中: show Japanese only */
                 <>
                   <p className="text-xs text-muted mb-2">{current.pos} · {current.topic}</p>
                   <p className="font-jp text-5xl font-bold text-foreground mb-2">{current.word}</p>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-base text-accent/80 font-jp">{current.kana}</span>
-                    <button onClick={() => speak(current.word)} className="text-muted/40 hover:text-accent transition-colors">
-                      <Volume2 size={14} />
-                    </button>
-                  </div>
+                  <span className="text-base text-accent/80 font-jp">{current.kana}</span>
                   {feedback && (
                     <p className="text-sm text-muted mt-3 pt-3 border-t border-surface/40">
                       参考：{current.meaning_zh.join(" / ")}
@@ -316,7 +278,7 @@ export default function HandwritingPage() {
               )}
             </div>
 
-            {/* Speaker button — always accessible in all modes */}
+            {/* Speaker button — single, always visible */}
             <div className="w-full flex justify-center">
               <button
                 onClick={() => speak(current.word)}
@@ -387,6 +349,27 @@ export default function HandwritingPage() {
             )}
           </>
         )}
+
+        {/* Mode switcher — bottom */}
+        <div className="w-full flex gap-2 mt-auto pt-2">
+          {([1, 2, 3] as HandwritingMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all
+                ${mode === m
+                  ? "bg-accent text-white shadow-sm"
+                  : "bg-surface text-muted hover:text-foreground"
+                }`}
+            >
+              <div>{MODE_LABELS[m].label}</div>
+              <div className={`text-[10px] mt-0.5 ${mode === m ? "text-white/70" : "text-muted/60"}`}>
+                {MODE_LABELS[m].desc}
+              </div>
+            </button>
+          ))}
+        </div>
+
       </div>
     </PageLayout>
   );
