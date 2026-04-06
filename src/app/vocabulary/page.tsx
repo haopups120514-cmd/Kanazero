@@ -10,12 +10,14 @@ import { useGenerate } from "@/hooks/useGenerate";
 import { formatNextReview } from "@/lib/srs";
 import { TOPICS, TOPIC_LABELS, TOPIC_CATEGORIES, LEVEL_OPTIONS } from "@/types";
 import type { Word } from "@/types";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Volume2 } from "lucide-react";
+import { useSpeech } from "@/hooks/useSpeech";
 
 export default function VocabularyPage() {
   const { words, addWords } = useWords();
   const { expressions, addExpressions } = useExpressions();
   const { generate, loading } = useGenerate();
+  const { speak } = useSpeech();
 
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -144,6 +146,12 @@ export default function VocabularyPage() {
                   <td className="px-4 py-2.5">
                     <span className="font-jp font-bold text-foreground">{w.word}</span>
                     <span className="text-muted text-xs ml-2 font-jp">{w.kana}</span>
+                    <button
+                      onClick={() => speak(w.word)}
+                      className="ml-1.5 text-muted/40 hover:text-accent transition-colors align-middle"
+                    >
+                      <Volume2 size={13} />
+                    </button>
                   </td>
                   <td className="px-4 py-2.5 hidden sm:table-cell font-mono text-muted text-xs">{w.romaji}</td>
                   <td className="px-4 py-2.5 text-foreground/80">{w.meaning_zh[0]}</td>

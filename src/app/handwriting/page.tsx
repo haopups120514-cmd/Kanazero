@@ -316,6 +316,17 @@ export default function HandwritingPage() {
               )}
             </div>
 
+            {/* Speaker button — always accessible in all modes */}
+            <div className="w-full flex justify-center">
+              <button
+                onClick={() => speak(current.word)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface text-muted hover:text-accent hover:bg-accent/10 transition-colors text-xs"
+              >
+                <Volume2 size={14} />
+                <span className="font-jp">{current.word}</span>
+              </button>
+            </div>
+
             {/* Handwriting canvas row: [提交 | textarea | 提交] */}
             <div className="w-full flex items-stretch gap-2">
               <button
