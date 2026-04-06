@@ -45,15 +45,13 @@ const sessionCache = new Map<string, string>(); // key → object URL
 
 const ENDPOINTS = [
   (text: string, speaker: number) =>
-    `https://deprecatedapis.tts.quest/v2/voicevox/audio/?text=${encodeURIComponent(text)}&key=voicevox&speaker=${speaker}`,
-  (text: string, speaker: number) =>
     `https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(text)}&speaker=${speaker}`,
 ];
 
 async function fetchVoiceVoxBlob(text: string, speaker: number): Promise<Blob | null> {
   for (const endpoint of ENDPOINTS) {
     try {
-      const res = await fetch(endpoint(text, speaker), { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(endpoint(text, speaker), { signal: AbortSignal.timeout(10000) });
       if (!res.ok) continue;
 
       const ct = res.headers.get("content-type") ?? "";
@@ -64,21 +62,17 @@ async function fetchVoiceVoxBlob(text: string, speaker: number): Promise<Blob | 
         continue;
       }
 
-      // v3 API returns JSON { audioContent?: string, audioUrl?: string }
+      // v3 API returns JSON with audio URLs
       if (ct.includes("application/json")) {
         const json = await res.json();
-        // audioContent: base64 mp3
-        if (json.audioContent) {
-          const bin = atob(json.audioContent);
-          const bytes = new Uint8Array(bin.length);
-          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-          return new Blob([bytes], { type: "audio/mpeg" });
-        }
-        // audioUrl: redirect to actual audio file
-        if (json.audioUrl) {
-          const r2 = await fetch(json.audioUrl, { signal: AbortSignal.timeout(8000) });
-          if (r2.ok) {
-            const blob = await r2.blob();
+        if (!json.success) continue;
+
+        // Prefer the fixed-size download URL over streaming (easier to cache)
+        const audioUrl: string | undefined = json.mp3DownloadUrl ?? json.mp3StreamingUrl ?? json.wavDownloadUrl;
+        if (audioUrl) {
+          const ar = await fetch(audioUrl, { signal: AbortSignal.timeout(10000) });
+          if (ar.ok) {
+            const blob = await ar.blob();
             if (blob.size > 0) return blob;
           }
         }
