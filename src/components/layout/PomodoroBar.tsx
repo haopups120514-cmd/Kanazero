@@ -1,16 +1,18 @@
 "use client";
 import { usePomodoro } from "@/hooks/usePomodoro";
 import { useSettings } from "@/hooks/useSettings";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
+import { Play, Pause, RotateCcw, Sun, Moon } from "lucide-react";
 
 export function PomodoroBar() {
   const { settings } = useSettings();
   const { display, status, progress, start, pause, resume, reset } =
     usePomodoro(settings.pomodoroMinutes);
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   return (
     <div className="fixed top-3 right-4 flex items-center gap-2 z-40">
-      {/* Progress arc (simple bar) */}
+      {/* Progress bar */}
       <div className="relative w-28 h-1.5 bg-surface rounded-full overflow-hidden">
         <div
           className="absolute left-0 top-0 h-full bg-accent rounded-full transition-all"
@@ -46,6 +48,15 @@ export function PomodoroBar() {
           <RotateCcw size={14} />
         </button>
       )}
+
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="text-muted hover:text-accent transition-colors ml-1"
+        title={isDark ? "切换浅色模式" : "切换深色模式"}
+      >
+        {isDark ? <Sun size={14} /> : <Moon size={14} />}
+      </button>
     </div>
   );
 }

@@ -9,12 +9,14 @@ import { useSync } from "@/hooks/useSync";
 import * as storage from "@/lib/storage";
 import type { Settings } from "@/types";
 import { TOPIC_CATEGORIES } from "@/types";
-import { Save, Trash2, Upload, Download, RefreshCw, Copy, Check } from "lucide-react";
+import { Save, Trash2, Upload, Download, RefreshCw, Copy, Check, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function SettingsPage() {
   const { settings, update } = useSettings();
   const { words, clearAll } = useWords();
   const { generateCode, push, pull, status: syncStatus, errorMsg, isConfigured } = useSync();
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   const [form, setForm] = useState<Settings>(settings);
   const [saved, setSaved] = useState(false);
@@ -155,6 +157,23 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
+        </Section>
+
+        {/* Theme */}
+        <Section title="主题外观">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isDark ? <Moon size={15} className="text-muted" /> : <Sun size={15} className="text-muted" />}
+              <span className="text-sm text-muted">{isDark ? "深色模式" : "浅色模式"}</span>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className={`relative w-10 h-5 rounded-full transition-colors ${isDark ? "bg-accent" : "bg-surface"}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isDark ? "translate-x-5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <p className="text-xs text-muted/50 mt-2">首次加载时跟随系统设置，可手动切换并记住选择</p>
         </Section>
 
         {/* Daily goal */}

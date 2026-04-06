@@ -9,6 +9,7 @@ interface BJTQuestionCardProps {
   selected?: string;
   onSelect?: (label: string) => void;
   showResult?: boolean;
+  showTranslation?: boolean;
   /** 禁用 AI 点评（如在 practice 页内嵌时） */
   noAICorrection?: boolean;
 }
@@ -18,6 +19,7 @@ export function BJTQuestionCard({
   selected,
   onSelect,
   showResult = false,
+  showTranslation = false,
   noAICorrection = false,
 }: BJTQuestionCardProps) {
   const isAnswered = showResult && selected !== undefined;
@@ -68,15 +70,19 @@ export function BJTQuestionCard({
       {/* Scenario */}
       <div className="bg-surface/50 rounded-xl px-5 py-4 border border-surface text-sm leading-relaxed">
         <p className="font-jp text-foreground leading-7">{question.scenario_ja}</p>
-        <p className="text-muted/60 mt-2 text-xs border-t border-surface/50 pt-2">
-          {question.scenario_zh}
-        </p>
+        {showTranslation && (
+          <p className="text-muted/60 mt-2 text-xs border-t border-surface/50 pt-2">
+            {question.scenario_zh}
+          </p>
+        )}
       </div>
 
       {/* Question */}
       <div className="text-center px-2">
         <p className="font-jp text-foreground text-base leading-7">{question.question_ja}</p>
-        <p className="text-muted text-sm mt-1">{question.question_zh}</p>
+        {showTranslation && (
+          <p className="text-muted text-sm mt-1">{question.question_zh}</p>
+        )}
       </div>
 
       {/* Options */}
@@ -118,7 +124,9 @@ export function BJTQuestionCard({
                 </span>
                 <div>
                   <span className="font-jp text-sm text-foreground">{opt.text_ja}</span>
-                  <span className="text-muted/60 text-xs ml-2">— {opt.text_zh}</span>
+                  {showTranslation && (
+                    <span className="text-muted/60 text-xs ml-2">— {opt.text_zh}</span>
+                  )}
                 </div>
               </div>
             </button>

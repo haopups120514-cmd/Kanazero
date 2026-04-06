@@ -2,31 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Light mode (default) ── */
 :root {
-  --bg: #1a1a2e;
-  --bg-card: #16213e;
-  --bg-hover: #0f3460;
-  --accent: #7c85ff;
-  --accent-dim: #4a54cc;
-  --accent-glow: #a5acff;
-  --success: #4ade80;
-  --error: #f87171;
-  --muted: #6b7280;
-  --surface: #1e2040;
-  --foreground: #e8e8f0;
+  --bg:          248 250 252;
+  --bg-card:     255 255 255;
+  --bg-hover:    241 245 249;
+  --accent:      56 189 248;
+  --accent-dim:  14 165 233;
+  --accent-glow: 125 211 252;
+  --success:     22 163 74;
+  --error:       220 38 38;
+  --muted:       100 116 139;
+  --surface:     226 232 240;
+  --foreground:  15 23 42;
+  color-scheme: light;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html {
+/* ── Dark mode — explicit ── */
+html[data-theme="dark"] {
+  --bg:          26 26 46;
+  --bg-card:     22 33 62;
+  --bg-hover:    15 52 96;
+  --accent:      56 189 248;
+  --accent-dim:  14 165 233;
+  --accent-glow: 125 211 252;
+  --success:     74 222 128;
+  --error:       248 113 113;
+  --muted:       107 114 128;
+  --surface:     30 32 64;
+  --foreground:  232 232 240;
   color-scheme: dark;
 }
 
+/* ── Dark mode — system preference (when no manual override) ── */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --bg:          26 26 46;
+    --bg-card:     22 33 62;
+    --bg-hover:    15 52 96;
+    --accent:      56 189 248;
+    --accent-dim:  14 165 233;
+    --accent-glow: 125 211 252;
+    --success:     74 222 128;
+    --error:       248 113 113;
+    --muted:       107 114 128;
+    --surface:     30 32 64;
+    --foreground:  232 232 240;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
 body {
-  background-color: var(--bg);
-  color: var(--foreground);
+  background-color: rgb(var(--bg));
+  color: rgb(var(--foreground));
   font-family: var(--font-jp), "Noto Sans JP", system-ui, sans-serif;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
@@ -38,45 +68,24 @@ body {
   font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--surface);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-dim);
-}
+/* Scrollbar */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: rgb(var(--bg)); }
+::-webkit-scrollbar-thumb  { background: rgb(var(--surface)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--accent-dim)); }
 
-/* Hidden input for capturing keystrokes */
+/* Hidden input for keystroke capture */
 .typing-capture {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 1px;
-  height: 1px;
+  position: absolute; opacity: 0;
+  pointer-events: none; width: 1px; height: 1px;
 }
 
 /* Char states in typing engine */
-.char-pending  { color: #6b7280; }
-.char-correct  { color: var(--success); }
-.char-wrong    { color: var(--error); }
-.char-current  { color: var(--foreground); border-bottom: 2px solid var(--accent); }
+.char-pending { color: rgb(var(--muted)); }
+.char-correct { color: rgb(var(--success)); }
+.char-wrong   { color: rgb(var(--error)); }
+.char-current { color: rgb(var(--foreground)); border-bottom: 2px solid rgb(var(--accent)); }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-  .bg-card {
-    background-color: var(--bg-card);
-  }
-  .border-surface {
-    border-color: var(--surface);
-  }
+  .text-balance { text-wrap: balance; }
 }

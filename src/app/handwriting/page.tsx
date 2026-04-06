@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Button } from "@/components/shared/Button";
 import { useWords } from "@/hooks/useWords";
 import { useSettings } from "@/hooks/useSettings";
 import { useSpeech } from "@/hooks/useSpeech";
@@ -143,7 +142,7 @@ export default function HandwritingPage() {
       )}
 
       {/* Progress row */}
-      <div className="w-full px-6 pt-3 pb-1 flex items-center justify-between">
+      <div className="w-full px-6 pt-2 pb-1 flex items-center justify-between">
         <span className="text-xs text-muted">{index + 1} / {queue.length}</span>
         {score.correct + score.wrong > 0 && (
           <span className="text-xs">
@@ -155,7 +154,7 @@ export default function HandwritingPage() {
       </div>
 
       {current && (
-        <div className="flex flex-col items-center gap-3 w-full px-6 pb-6 pt-1">
+        <div className="flex flex-col items-center gap-3 w-full px-6 pb-4 pt-0">
           {/* Question card */}
           <div className="w-full bg-bg-card border border-surface rounded-2xl p-5 text-center">
             <p className="text-xs text-muted mb-1">{current.pos} · {current.topic}</p>
@@ -174,27 +173,50 @@ export default function HandwritingPage() {
             )}
           </div>
 
-          {/* Input area — compact height for iPad */}
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="用 Apple Pencil 书写…"
-            rows={2}
-            disabled={!!feedback?.correct}
-            className={`w-full bg-surface/40 border-2 rounded-2xl px-5 py-3 text-center font-serif text-4xl
-              text-foreground placeholder:text-muted/30 focus:outline-none transition-colors resize-none h-24
-              ${feedback
-                ? feedback.correct
-                  ? "border-success/60 bg-success/5"
-                  : "border-error/60 bg-error/5"
-                : "border-surface focus:border-accent"
-              }`}
-            autoComplete="off" autoCorrect="off" spellCheck={false} autoCapitalize="none"
-          />
+          {/* Input row: 清除 | textarea | 提交 */}
+          <div className="w-full flex items-stretch gap-2">
+            <button
+              onClick={() => { setInput(""); inputRef.current?.focus(); }}
+              className="flex-none w-14 flex flex-col items-center justify-center gap-0.5
+                bg-surface/40 border-2 border-surface rounded-2xl text-muted text-xs
+                hover:text-foreground hover:border-surface/80 transition-colors"
+            >
+              <span>清</span>
+              <span>除</span>
+            </button>
 
-          {/* Inline feedback — below textarea, above submit */}
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="书写…"
+              rows={2}
+              disabled={!!feedback?.correct}
+              className={`flex-1 bg-surface/40 border-2 rounded-2xl px-3 py-3 text-center font-serif text-4xl
+                text-foreground placeholder:text-muted/30 focus:outline-none transition-colors resize-none h-24
+                ${feedback
+                  ? feedback.correct
+                    ? "border-success/60 bg-success/5"
+                    : "border-error/60 bg-error/5"
+                  : "border-surface focus:border-accent"
+                }`}
+              autoComplete="off" autoCorrect="off" spellCheck={false} autoCapitalize="none"
+            />
+
+            <button
+              onClick={handleSubmit}
+              disabled={!input.trim() || !!feedback?.correct}
+              className="flex-none w-14 flex flex-col items-center justify-center gap-0.5
+                bg-accent text-white rounded-2xl text-xs font-medium
+                disabled:opacity-40 transition-colors hover:bg-accent-dim"
+            >
+              <span>提</span>
+              <span>交</span>
+            </button>
+          </div>
+
+          {/* Inline feedback */}
           {feedback && (
             <div className={`w-full rounded-xl px-4 py-2.5 text-center border text-sm
               ${feedback.correct
@@ -207,20 +229,6 @@ export default function HandwritingPage() {
               }
             </div>
           )}
-
-          {/* Submit button — fixed below textarea, no scrolling needed */}
-          {!feedback?.correct && (
-            <Button
-              onClick={handleSubmit}
-              size="lg"
-              className="w-full max-w-xs"
-              disabled={!input.trim()}
-            >
-              提交
-            </Button>
-          )}
-
-          <p className="text-xs text-muted/40">根据读音写出汉字，Enter 提交</p>
         </div>
       )}
     </PageLayout>

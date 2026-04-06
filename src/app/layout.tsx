@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#7c85ff",
+  themeColor: "#38BDF8",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -43,8 +43,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${notoSansJP.variable} ${jetbrainsMono.variable}`}>
+    <html lang="ja" className={`${notoSansJP.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body className="antialiased">
+        {/* Theme init: run before React hydration to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('kz-theme');document.documentElement.setAttribute('data-theme',t||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));}catch(e){}})();` }} />
         <AuthGate>
           {children}
         </AuthGate>
@@ -52,7 +54,6 @@ export default function RootLayout({
           __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
         }} />
       </body>
-
     </html>
   );
 }

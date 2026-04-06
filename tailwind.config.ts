@@ -10,23 +10,24 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          DEFAULT: "#1a1a2e",
-          card: "#16213e",
-          hover: "#0f3460",
+          DEFAULT: "rgb(var(--bg) / <alpha-value>)",
+          card:    "rgb(var(--bg-card) / <alpha-value>)",
+          hover:   "rgb(var(--bg-hover) / <alpha-value>)",
         },
         accent: {
-          DEFAULT: "#7c85ff",
-          dim: "#4a54cc",
-          glow: "#a5acff",
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
+          dim:     "rgb(var(--accent-dim) / <alpha-value>)",
+          glow:    "rgb(var(--accent-glow) / <alpha-value>)",
         },
-        success: "#4ade80",
-        error: "#f87171",
-        muted: "#6b7280",
-        surface: "#1e2040",
+        success:    "rgb(var(--success) / <alpha-value>)",
+        error:      "rgb(var(--error) / <alpha-value>)",
+        muted:      "rgb(var(--muted) / <alpha-value>)",
+        surface:    "rgb(var(--surface) / <alpha-value>)",
+        foreground: "rgb(var(--foreground) / <alpha-value>)",
       },
       fontFamily: {
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
-        jp: ["var(--font-jp)", "Noto Sans JP", "sans-serif"],
+        jp:   ["var(--font-jp)", "Noto Sans JP", "sans-serif"],
         sans: ["var(--font-jp)", "system-ui", "sans-serif"],
       },
       animation: {
@@ -35,12 +36,9 @@ const config: Config = {
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
+        fadeIn:  { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
         slideUp: {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "0%":   { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },

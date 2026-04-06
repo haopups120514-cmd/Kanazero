@@ -8,7 +8,7 @@ import { useGenerate } from "@/hooks/useGenerate";
 import * as storage from "@/lib/storage";
 import type { BJTQuestion } from "@/types";
 import { EXAM_TYPES } from "@/types";
-import { Plus, RotateCcw, Upload } from "lucide-react";
+import { Plus, RotateCcw, Upload, Languages } from "lucide-react";
 
 export default function QuestionBankPage() {
   const [allQuestions, setAllQuestions] = useState<BJTQuestion[]>([]);
@@ -18,6 +18,7 @@ export default function QuestionBankPage() {
   const [showResult, setShowResult] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { generate, loading } = useGenerate();
 
@@ -34,11 +35,13 @@ export default function QuestionBankPage() {
     setCurrent(0);
     setSelected(undefined);
     setShowResult(false);
+    setShowTranslation(false);
   }, [examType]);
 
   const handleSelect = (label: string) => {
     setSelected(label);
     setShowResult(true);
+    setShowTranslation(true);
     const targetId = questions[current]?.id;
     const updated = allQuestions.map((q) =>
       q.id === targetId ? { ...q, done: true, correct: label === q.answer } : q
@@ -60,6 +63,7 @@ export default function QuestionBankPage() {
       setCurrent((c) => c + 1);
       setSelected(undefined);
       setShowResult(false);
+      setShowTranslation(false);
     }
   };
 
@@ -131,6 +135,18 @@ export default function QuestionBankPage() {
           )}
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowTranslation((v) => !v)}
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs border rounded-lg transition-colors ${
+              showTranslation
+                ? "text-accent border-accent/40 bg-accent/10"
+                : "text-muted border-surface hover:text-foreground hover:border-foreground/20"
+            }`}
+            title="显示/隐藏中文翻译"
+          >
+            <Languages size={12} />
+            译
+          </button>
           <Button variant="ghost" size="sm" onClick={handleReset}>
             <RotateCcw size={14} />
             重置
@@ -227,6 +243,7 @@ export default function QuestionBankPage() {
             }
             onSelect={handleSelect}
             showResult={showResult}
+            showTranslation={showTranslation}
           />
 
           <div className="mt-6 flex justify-center">
