@@ -1,4 +1,4 @@
-const CACHE = "kanazero-v1";
+const CACHE = "kanazero-v2";
 const PRECACHE = ["/", "/practice", "/handwriting", "/expressions", "/review", "/bjt", "/stats", "/settings", "/vocabulary"];
 
 self.addEventListener("install", (e) => {
