@@ -322,14 +322,16 @@ export default function HandwritingPage() {
               })()}
             </div>
 
-            {/* Speaker button — single, always visible */}
+            {/* Speaker button — mode 2/4 只显示图标（答案是日语），mode 1/3 显示词 */}
             <div className="w-full flex items-center justify-center gap-2">
               <button
                 onClick={() => speak(current.word)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface text-muted hover:text-accent hover:bg-accent/10 transition-colors text-xs"
               >
                 <Volume2 size={14} />
-                <span className="font-jp">{current.word}</span>
+                {(mode === 1 || mode === 3) && (
+                  <span className="font-jp">{current.word}</span>
+                )}
               </button>
             </div>
 

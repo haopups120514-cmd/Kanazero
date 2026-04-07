@@ -131,7 +131,7 @@ export default function QuizPage() {
       wrong: s.wrong + (correct ? 0 : 1),
     }));
     if (correct) { playCorrect(); speak(current.wordJa); }
-    else { playWrong(); setWrongWords((p) => [...p, current]); }
+    else { playWrong(); setWrongWords((p) => p.some(q => q.wordId === current.wordId) ? p : [...p, current]); }
   }, [current, feedback, speak]);
 
   const next = useCallback(() => {
@@ -251,7 +251,7 @@ export default function QuizPage() {
         <div className="h-1.5 bg-surface rounded-full overflow-hidden">
           <div
             className="h-full bg-accent rounded-full transition-all"
-            style={{ width: `${((index) / questions.length) * 100}%` }}
+            style={{ width: `${((index + 1) / questions.length) * 100}%` }}
           />
         </div>
       </div>

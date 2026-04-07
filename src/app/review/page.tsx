@@ -40,6 +40,7 @@ export default function ReviewPage() {
   const sessionQueueRef = useRef<ReviewItem[]>([]);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(0);
+  const [correct, setCorrect] = useState(0);
   const [streak, setStreak] = useState(0);
   const [mounted, setMounted] = useState(false);
 
@@ -77,7 +78,7 @@ export default function ReviewPage() {
     if (current.kind === "word") recordWordResult(current.item.id, correct);
     else recordExprResult(current.item.id, correct);
     recordActivity(1);
-    if (correct) { setStreak((s) => s + 1); playCorrect(); }
+    if (correct) { setStreak((s) => s + 1); setCorrect((c) => c + 1); playCorrect(); }
     else { setStreak(0); playWrong(); }
     setDone((d) => d + 1);
     setTimeout(() => setIndex((i) => i + 1), 300);
@@ -99,18 +100,33 @@ export default function ReviewPage() {
   }
 
   if (index >= queue.length) {
+    const pct = done > 0 ? Math.round((correct / done) * 100) : 0;
     return (
       <PageLayout center maxWidth="sm">
         <div className="text-center">
-          <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            复习完成！共 {done} 个
-          </h2>
-          <p className="text-muted text-sm mb-4">太棒了，继续保持！</p>
+          <div className="text-5xl mb-4">{pct >= 80 ? "🎉" : "💪"}</div>
+          <h2 className="text-xl font-bold text-foreground mb-1">复习完成！</h2>
+          <div className="flex justify-center gap-6 my-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-success">{correct}</div>
+              <div className="text-xs text-muted">正确</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-error">{done - correct}</div>
+              <div className="text-xs text-muted">错误</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-accent">{pct}%</div>
+              <div className="text-xs text-muted">正确率</div>
+            </div>
+          </div>
+          <p className="text-muted text-sm mb-4">SRS 已更新，下次复习时间已安排</p>
           <Button onClick={() => {
             setQueue([...sessionQueueRef.current]);
             setIndex(0);
             setDone(0);
+            setCorrect(0);
+            setStreak(0);
           }}>
             重新复习
           </Button>
