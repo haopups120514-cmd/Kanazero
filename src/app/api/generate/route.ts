@@ -190,6 +190,26 @@ ${question.scenario_ja}
       return NextResponse.json({ correction: text });
     }
 
+    // ── 记忆钩子：为单词生成趣味联想 ─────────────────────────────────────────
+    if (type === "mnemonic") {
+      const { wordJa, wordKana, meaningZh } = body as {
+        wordJa: string; wordKana: string; meaningZh: string;
+      };
+      const prompt = `你是一位语言记忆专家。请为以下日语单词生成一个简短、有趣的中文记忆联想（记忆钩子），帮助学习者快速记住这个词。
+
+单词：${wordJa}（${wordKana}）
+含义：${meaningZh}
+
+要求：
+1. 用谐音、拆字、画面联想或小故事，越生动越好
+2. 50字以内，纯中文
+3. 只返回记忆联想内容，不要任何前缀
+
+示例格式：「会議」→ 「"开A议"——开会A要A议一议，读音 かいぎ 像"开A议"」`;
+      const text = await callClaude(client, prompt, SONNET_MODEL, 150);
+      return NextResponse.json({ mnemonic: text.trim() });
+    }
+
     // ── 中文回答判定：AI 判断日→中模式的作答是否正确 ──────────────────────────
     if (type === "chinese_judgment") {
       const { wordJa, wordKana, userInput } = body as {

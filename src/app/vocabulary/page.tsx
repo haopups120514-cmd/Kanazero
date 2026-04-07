@@ -10,14 +10,16 @@ import { useGenerate } from "@/hooks/useGenerate";
 import { formatNextReview } from "@/lib/srs";
 import { TOPICS, TOPIC_LABELS, TOPIC_CATEGORIES, LEVEL_OPTIONS } from "@/types";
 import type { Word } from "@/types";
-import { Plus, RefreshCw, Volume2 } from "lucide-react";
+import { Plus, RefreshCw, Volume2, Lightbulb } from "lucide-react";
 import { useSpeech } from "@/hooks/useSpeech";
+import { useSettings } from "@/hooks/useSettings";
 
 export default function VocabularyPage() {
-  const { words, addWords } = useWords();
+  const { words, addWords, updateWord } = useWords();
   const { expressions, addExpressions } = useExpressions();
   const { generate, loading } = useGenerate();
   const { speak } = useSpeech();
+  const { settings } = useSettings();
 
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -25,6 +27,8 @@ export default function VocabularyPage() {
   const [genLevel, setGenLevel] = useState("N3");
   const [showGenModal, setShowGenModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+  const [openMnemonic, setOpenMnemonic] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -49,6 +53,26 @@ export default function VocabularyPage() {
   const handleGenerateExprs = async () => {
     const result = await generate({ type: "expressions", count: 5 });
     if (result?.expressions) addExpressions(result.expressions);
+  };
+
+  const handleMnemonic = async (w: Word) => {
+    if (w.mnemonic) { setOpenMnemonic(openMnemonic === w.id ? null : w.id); return; }
+    setGeneratingFor(w.id);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "mnemonic",
+          wordJa: w.word, wordKana: w.kana, meaningZh: w.meaning_zh[0],
+          apiKeyOverride: settings.apiKeyOverride || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.mnemonic) { updateWord(w.id, { mnemonic: data.mnemonic }); setOpenMnemonic(w.id); }
+    } finally {
+      setGeneratingFor(null);
+    }
   };
 
   if (!mounted) return null;
@@ -137,6 +161,7 @@ export default function VocabularyPage() {
             </thead>
             <tbody>
               {filteredWords.map((w, i) => (
+                <>
                 <tr
                   key={w.id}
                   className={`border-t border-surface/40 hover:bg-surface/20 transition-colors ${
@@ -152,6 +177,18 @@ export default function VocabularyPage() {
                     >
                       <Volume2 size={13} />
                     </button>
+                    <button
+                      onClick={() => handleMnemonic(w)}
+                      title="AI 记忆钩子"
+                      className={`ml-1 transition-colors align-middle ${
+                        w.mnemonic ? "text-yellow-400/60 hover:text-yellow-400" : "text-muted/30 hover:text-yellow-400"
+                      }`}
+                    >
+                      {generatingFor === w.id
+                        ? <LoadingSpinner size={12} />
+                        : <Lightbulb size={13} />
+                      }
+                    </button>
                   </td>
                   <td className="px-4 py-2.5 hidden sm:table-cell font-mono text-muted text-xs">{w.romaji}</td>
                   <td className="px-4 py-2.5 text-foreground/80">{w.meaning_zh[0]}</td>
@@ -159,6 +196,15 @@ export default function VocabularyPage() {
                   <td className="px-4 py-2.5"><SrsBadge stage={w.srsStage} /></td>
                   <td className="px-4 py-2.5 hidden lg:table-cell text-muted text-xs">{formatNextReview(w.nextReview)}</td>
                 </tr>
+                {openMnemonic === w.id && w.mnemonic && (
+                  <tr key={`${w.id}-mnemonic`} className="bg-yellow-400/5 border-t border-yellow-400/10">
+                    <td colSpan={6} className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-300/80 flex items-start gap-1.5">
+                      <Lightbulb size={12} className="mt-0.5 flex-none text-yellow-400" />
+                      {w.mnemonic}
+                    </td>
+                  </tr>
+                )}
+                </>
               ))}
             </tbody>
           </table>

@@ -19,6 +19,7 @@ export interface Word {
   correctCount: number;
   wrongCount: number;
   createdAt: number;
+  mnemonic?: string;      // AI 记忆钩子
 }
 
 export interface Expression {

@@ -4,19 +4,20 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Home, Keyboard, RotateCcw, BookOpen, FileQuestion,
-  BarChart2, Settings, MessageSquare, PenTool, EyeOff,
+  BarChart2, Settings, MessageSquare, PenTool, EyeOff, ClipboardCheck,
 } from "lucide-react";
 
 const NAV = [
-  { href: "/",            icon: Home,          label: "首页" },
-  { href: "/practice",   icon: Keyboard,      label: "练习" },
-  { href: "/handwriting", icon: PenTool,       label: "手写" },
-  { href: "/expressions", icon: MessageSquare, label: "表达" },
-  { href: "/review",     icon: RotateCcw,     label: "复习" },
-  { href: "/vocabulary", icon: BookOpen,      label: "词库" },
-  { href: "/bjt",        icon: FileQuestion,  label: "题库" },
-  { href: "/stats",      icon: BarChart2,     label: "统计" },
-  { href: "/settings",   icon: Settings,      label: "设置" },
+  { href: "/",            icon: Home,           label: "首页" },
+  { href: "/practice",   icon: Keyboard,       label: "练习" },
+  { href: "/handwriting", icon: PenTool,        label: "手写" },
+  { href: "/expressions", icon: MessageSquare,  label: "表达" },
+  { href: "/review",     icon: RotateCcw,      label: "复习" },
+  { href: "/quiz",       icon: ClipboardCheck, label: "测验" },
+  { href: "/vocabulary", icon: BookOpen,       label: "词库" },
+  { href: "/bjt",        icon: FileQuestion,   label: "题库" },
+  { href: "/stats",      icon: BarChart2,      label: "统计" },
+  { href: "/settings",   icon: Settings,       label: "设置" },
 ];
 
 export function Sidebar() {

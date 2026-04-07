@@ -11,15 +11,25 @@ import { matchJapanese, matchChinese, normalizeChinese } from "@/lib/japaneseMat
 import { playCorrect, playWrong } from "@/lib/sounds";
 import type { Word } from "@/types";
 import { TOPIC_CATEGORIES } from "@/types";
-import { Volume2 } from "lucide-react";
+import { Volume2, Lightbulb } from "lucide-react";
 
-type HandwritingMode = 1 | 2 | 3;
+type HandwritingMode = 1 | 2 | 3 | 4;
 
 const MODE_LABELS: Record<HandwritingMode, { label: string; desc: string }> = {
   1: { label: "辅助", desc: "照抄日语" },
   2: { label: "中→日", desc: "看义写词" },
   3: { label: "日→中", desc: "看词写义" },
+  4: { label: "填空", desc: "例句填词" },
 };
+
+function blankWord(example: string, word: string, kana: string): string {
+  if (!example) return "";
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const result = example
+    .replace(new RegExp(esc(word), "g"), "＿＿＿")
+    .replace(new RegExp(esc(kana), "g"), "＿＿＿");
+  return result !== example ? result : "";
+}
 
 interface Feedback {
   correct: boolean;
@@ -75,7 +85,6 @@ export default function HandwritingPage() {
     if (mode !== 3) speak(current.word);
     setTimeout(() => inputRef.current?.focus(), 150);
   }, [index, current?.id, mode]); // eslint-disable-line
-
   // Auto-advance 1s after correct answer
   useEffect(() => {
     if (!feedback?.correct) return;
@@ -161,7 +170,7 @@ export default function HandwritingPage() {
         setAiChecking(false);
       }
     } else {
-      // Mode 1 & 2: Japanese answer
+      // Mode 1, 2 & 4: Japanese answer
       const correct = matchJapanese(answer, [current.word, current.kana]);
       setFeedback({ correct, correctAnswer: current.word });
       recordResult(current.id, correct);
@@ -289,10 +298,32 @@ export default function HandwritingPage() {
                   )}
                 </>
               )}
+
+              {mode === 4 && (() => {
+                const blanked = blankWord(current.example_ja, current.word, current.kana);
+                return blanked ? (
+                  <>
+                    <p className="text-xs text-muted mb-3">{current.pos} · {current.topic}</p>
+                    <p className="font-jp text-xl text-foreground leading-relaxed mb-2">{blanked}</p>
+                    <p className="text-xs text-muted">{current.example_zh}</p>
+                    {feedback && (
+                      <p className="font-jp text-sm text-accent font-medium mt-3 pt-3 border-t border-surface/40">
+                        答案：{current.word}（{current.kana}）
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  /* fallback if word not in example */
+                  <>
+                    <p className="text-xs text-muted mb-3">{current.pos} · {current.topic}</p>
+                    <p className="text-3xl font-bold text-foreground">{current.meaning_zh[0]}</p>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Speaker button — single, always visible */}
-            <div className="w-full flex justify-center">
+            <div className="w-full flex items-center justify-center gap-2">
               <button
                 onClick={() => speak(current.word)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface text-muted hover:text-accent hover:bg-accent/10 transition-colors text-xs"
@@ -301,6 +332,14 @@ export default function HandwritingPage() {
                 <span className="font-jp">{current.word}</span>
               </button>
             </div>
+
+            {/* Mnemonic hint (if available) */}
+            {current.mnemonic && (
+              <div className="w-full flex items-start gap-1.5 bg-yellow-400/5 border border-yellow-400/15 rounded-xl px-3 py-2">
+                <Lightbulb size={13} className="text-yellow-400 flex-none mt-0.5" />
+                <p className="text-xs text-yellow-600 dark:text-yellow-300/80 leading-relaxed">{current.mnemonic}</p>
+              </div>
+            )}
 
             {/* Handwriting canvas row: [提交 | textarea | 提交] */}
             <div className="w-full flex items-stretch gap-2">
@@ -321,8 +360,7 @@ export default function HandwritingPage() {
                 onKeyDown={handleKeyDown}
                 placeholder={mode === 3 ? "写出中文意思…" : "在此书写…"}
                 disabled={!!feedback?.correct || aiChecking}
-                lang={mode === 3 ? "zh" : "ja"}
-                className={`flex-1 bg-bg-card border-2 border-dashed rounded-2xl p-4 text-center font-jp text-5xl
+                lang={mode === 3 ? "zh" : "ja"}                className={`flex-1 bg-bg-card border-2 border-dashed rounded-2xl p-4 text-center font-jp text-5xl
                   text-foreground placeholder:text-muted/20 focus:outline-none transition-colors resize-none h-40
                   ${aiChecking ? "opacity-60" : ""}
                   ${feedback
@@ -365,7 +403,7 @@ export default function HandwritingPage() {
 
         {/* Mode switcher — bottom */}
         <div className="w-full flex gap-2 mt-auto pt-2">
-          {([1, 2, 3] as HandwritingMode[]).map((m) => (
+          {([1, 2, 3, 4] as HandwritingMode[]).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}

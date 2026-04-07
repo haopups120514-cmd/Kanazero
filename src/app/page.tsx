@@ -10,7 +10,7 @@ import { useExpressions } from "@/hooks/useExpressions";
 import { useSettings } from "@/hooks/useSettings";
 import { dueItems } from "@/lib/srs";
 import { playCelebration } from "@/lib/sounds";
-import { Keyboard, RotateCcw } from "lucide-react";
+import { Keyboard, RotateCcw, ClipboardCheck } from "lucide-react";
 
 export default function HomePage() {
   const { activity, stats, todayCount } = useProgress();
@@ -26,6 +26,11 @@ export default function HomePage() {
     ? dueItems(words.filter((w) => w.srsStage > 0)).length +
       dueItems(expressions.filter((e) => e.srsStage > 0)).length
     : 0;
+
+  const todayStudied = mounted ? (() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    return words.filter((w) => w.lastReview >= start.getTime() && w.lastReview > 0).length;
+  })() : 0;
 
   const goalMet = mounted && todayCount >= settings.dailyGoal && todayCount > 0;
 
@@ -68,6 +73,15 @@ export default function HomePage() {
         {dueCount > 0 && (
           <Link href="/practice" className="text-sm text-muted hover:text-foreground transition-colors">
             练习新词 →
+          </Link>
+        )}
+        {todayStudied > 0 && (
+          <Link
+            href="/quiz"
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-surface text-muted hover:text-foreground hover:bg-surface/80 text-sm transition-colors"
+          >
+            <ClipboardCheck size={15} />
+            今日测验 · {todayStudied} 个词
           </Link>
         )}
       </div>
