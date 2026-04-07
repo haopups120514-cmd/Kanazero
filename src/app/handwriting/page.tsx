@@ -8,6 +8,7 @@ import { useSpeech } from "@/hooks/useSpeech";
 import { useProgress } from "@/hooks/useProgress";
 import { dueItems } from "@/lib/srs";
 import { matchJapanese, matchChinese, normalizeChinese } from "@/lib/japaneseMatch";
+import { playCorrect, playWrong } from "@/lib/sounds";
 import type { Word } from "@/types";
 import { TOPIC_CATEGORIES } from "@/types";
 import { Volume2 } from "lucide-react";
@@ -38,6 +39,7 @@ export default function HandwritingPage() {
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
+  const [streak, setStreak] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [aiChecking, setAiChecking] = useState(false);
 
@@ -103,6 +105,8 @@ export default function HandwritingPage() {
         recordResult(current.id, true);
         recordActivity(1);
         setScore((s) => ({ correct: s.correct + 1, wrong: s.wrong }));
+        setStreak((s) => s + 1);
+        playCorrect();
         speak(current.word);
         return;
       }
@@ -141,6 +145,8 @@ export default function HandwritingPage() {
           correct: s.correct + (correct ? 1 : 0),
           wrong: s.wrong + (correct ? 0 : 1),
         }));
+        if (correct) { setStreak((s) => s + 1); playCorrect(); }
+        else { setStreak(0); playWrong(); }
         speak(current.word);
         if (!correct) {
           setTimeout(() => { setInput(""); setFeedback(null); inputRef.current?.focus(); }, 1800);
@@ -164,6 +170,8 @@ export default function HandwritingPage() {
         correct: s.correct + (correct ? 1 : 0),
         wrong: s.wrong + (correct ? 0 : 1),
       }));
+      if (correct) { setStreak((s) => s + 1); playCorrect(); }
+      else { setStreak(0); playWrong(); }
       speak(current.word);
       if (!correct) {
         setTimeout(() => { setInput(""); setFeedback(null); inputRef.current?.focus(); }, 1800);
@@ -224,13 +232,18 @@ export default function HandwritingPage() {
         {/* Progress row */}
         <div className="w-full flex items-center justify-between">
           <span className="text-xs text-muted">{index + 1} / {queue.length}</span>
-          {score.correct + score.wrong > 0 && (
-            <span className="text-xs">
-              <span className="text-success">{score.correct}✓</span>
-              <span className="text-muted"> · </span>
-              <span className="text-error">{score.wrong}✗</span>
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {streak >= 2 && (
+              <span className="text-sm font-bold text-orange-400">🔥 {streak}</span>
+            )}
+            {score.correct + score.wrong > 0 && (
+              <span className="text-xs">
+                <span className="text-success">{score.correct}✓</span>
+                <span className="text-muted"> · </span>
+                <span className="text-error">{score.wrong}✗</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {current && (

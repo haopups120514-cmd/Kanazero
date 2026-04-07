@@ -12,6 +12,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useProgress } from "@/hooks/useProgress";
 import { dueItems, formatNextReview } from "@/lib/srs";
 import * as storage from "@/lib/storage";
+import { playCorrect, playWrong } from "@/lib/sounds";
 import type { Word, Expression } from "@/types";
 
 type ReviewItem = { kind: "word"; item: Word } | { kind: "expression"; item: Expression };
@@ -39,6 +40,7 @@ export default function ReviewPage() {
   const sessionQueueRef = useRef<ReviewItem[]>([]);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(0);
+  const [streak, setStreak] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   // Build queue once on mount from storage — never rebuilds mid-session
@@ -75,6 +77,8 @@ export default function ReviewPage() {
     if (current.kind === "word") recordWordResult(current.item.id, correct);
     else recordExprResult(current.item.id, correct);
     recordActivity(1);
+    if (correct) { setStreak((s) => s + 1); playCorrect(); }
+    else { setStreak(0); playWrong(); }
     setDone((d) => d + 1);
     setTimeout(() => setIndex((i) => i + 1), 300);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,12 +124,13 @@ export default function ReviewPage() {
       {/* Header info */}
       <div className="text-center mb-8">
         <div className="text-xs text-muted uppercase tracking-widest mb-2">间隔复习</div>
-        <div className="text-sm text-muted">
-          {index + 1} / {queue.length}
+        <div className="text-sm text-muted flex items-center justify-center gap-3">
+          <span>{index + 1} / {queue.length}</span>
           {current?.kind === "word" && (
-            <span className="ml-3">
-              <SrsBadge stage={(current as { kind: "word"; item: Word }).item.srsStage} />
-            </span>
+            <SrsBadge stage={(current as { kind: "word"; item: Word }).item.srsStage} />
+          )}
+          {streak >= 2 && (
+            <span className="font-bold text-orange-400">🔥 {streak}</span>
           )}
         </div>
       </div>

@@ -21,21 +21,25 @@ export function QuickStats({
   const dueCount =
     dueItems(words.filter((w) => w.srsStage > 0)).length +
     dueItems(expressions.filter((e) => e.srsStage > 0)).length;
-  const progress = Math.min(1, todayCount / dailyGoal);
+  const progress = Math.min(1, todayCount / (dailyGoal || 1));
+  const goalMet = progress >= 1;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <StatCard
         label="今日练习"
         value={todayCount}
-        sub={`目标 ${dailyGoal}`}
+        sub={goalMet ? "目标完成 ✓" : `目标 ${dailyGoal}`}
+        accent={goalMet ? "success" : undefined}
         extra={
-          <div className="mt-1.5 h-1 bg-surface rounded-full overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
+          <>
+            <div className="mt-1.5 h-1 bg-surface rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${goalMet ? "bg-success" : "bg-accent"}`}
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+          </>
         }
       />
       <StatCard
@@ -69,7 +73,7 @@ function StatCard({
   label: string;
   value: number;
   sub: string;
-  accent?: "accent" | "error";
+  accent?: "accent" | "error" | "success";
   extra?: React.ReactNode;
 }) {
   const valueColor =
@@ -77,6 +81,8 @@ function StatCard({
       ? "text-accent"
       : accent === "error"
       ? "text-error"
+      : accent === "success"
+      ? "text-success"
       : "text-foreground";
 
   return (

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { ActivityHeatmap } from "@/components/home/ActivityHeatmap";
@@ -8,7 +8,9 @@ import { useProgress } from "@/hooks/useProgress";
 import { useWords } from "@/hooks/useWords";
 import { useExpressions } from "@/hooks/useExpressions";
 import { useSettings } from "@/hooks/useSettings";
-import { Keyboard } from "lucide-react";
+import { dueItems } from "@/lib/srs";
+import { playCelebration } from "@/lib/sounds";
+import { Keyboard, RotateCcw } from "lucide-react";
 
 export default function HomePage() {
   const { activity, stats, todayCount } = useProgress();
@@ -16,28 +18,58 @@ export default function HomePage() {
   const { expressions } = useExpressions();
   const { settings } = useSettings();
   const [mounted, setMounted] = useState(false);
+  const celebratedRef = useRef(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  const dueCount = mounted
+    ? dueItems(words.filter((w) => w.srsStage > 0)).length +
+      dueItems(expressions.filter((e) => e.srsStage > 0)).length
+    : 0;
+
+  const goalMet = mounted && todayCount >= settings.dailyGoal && todayCount > 0;
+
+  // 首次达到今日目标时播放庆祝音效
+  useEffect(() => {
+    if (goalMet && !celebratedRef.current) {
+      celebratedRef.current = true;
+      playCelebration();
+    }
+  }, [goalMet]);
 
   return (
     <PageLayout maxWidth="md">
       {/* Hero */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-foreground mb-1 tracking-tight">
           KanaZero
         </h1>
         <p className="text-muted text-sm">ゼロから始める日本語タイピング学習</p>
       </div>
 
-      {/* Start button */}
-      <div className="flex justify-center mb-10">
+      {/* 今日目标完成庆祝横幅 */}
+      {goalMet && (
+        <div className="mb-6 bg-success/10 border border-success/30 rounded-2xl px-5 py-4 text-center">
+          <p className="text-xl mb-0.5">🎉</p>
+          <p className="text-success font-bold text-sm">今日目标完成！</p>
+          <p className="text-muted text-xs mt-0.5">已练习 {todayCount} 个，继续保持</p>
+        </div>
+      )}
+
+      {/* 智能开始按钮：有待复习词汇时优先引导复习 */}
+      <div className="flex flex-col items-center gap-3 mb-10">
         <Link
-          href="/practice"
+          href={dueCount > 0 ? "/review" : "/practice"}
           className="flex items-center gap-3 bg-accent hover:bg-accent-dim text-white px-10 py-4 rounded-2xl font-bold text-lg transition-colors shadow-lg"
         >
-          <Keyboard size={22} />
-          今日の練習を始める
+          {dueCount > 0 ? <RotateCcw size={22} /> : <Keyboard size={22} />}
+          {dueCount > 0 ? `复习 ${dueCount} 个词汇` : "今日の練習を始める"}
         </Link>
+        {dueCount > 0 && (
+          <Link href="/practice" className="text-sm text-muted hover:text-foreground transition-colors">
+            练习新词 →
+          </Link>
+        )}
       </div>
 
       {mounted && (

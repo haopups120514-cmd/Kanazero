@@ -9,6 +9,7 @@ import { useGenerate } from "@/hooks/useGenerate";
 import { useProgress } from "@/hooks/useProgress";
 import { useSpeech } from "@/hooks/useSpeech";
 import { matchJapanese } from "@/lib/japaneseMatch";
+import { playCorrect, playWrong } from "@/lib/sounds";
 import * as storage from "@/lib/storage";
 import { dueItems } from "@/lib/srs";
 import type { Expression } from "@/types";
@@ -30,6 +31,7 @@ export default function ExpressionsPage() {
   const [input, setInput] = useState("");
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState({ correct: 0, wrong: 0 });
+  const [streak, setStreak] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [showGenModal, setShowGenModal] = useState(false);
   const [genTopic, setGenTopic] = useState<string>("");
@@ -69,8 +71,8 @@ export default function ExpressionsPage() {
     recordResult(current.id, correct);
     recordActivity(1);
     setScore((s) => ({ correct: s.correct + (correct ? 1 : 0), wrong: s.wrong + (correct ? 0 : 1) }));
-
-    // 朗读正确答案
+    if (correct) { setStreak((s) => s + 1); playCorrect(); }
+    else { setStreak(0); playWrong(); }
     speak(current.answer_ja);
   }, [current, input, recordResult, recordActivity, speak]);
 
@@ -170,6 +172,9 @@ export default function ExpressionsPage() {
             {" · "}
             <span className="text-error">{score.wrong}✗</span>
           </span>
+        )}
+        {streak >= 2 && (
+          <span className="ml-3 font-bold text-orange-400">🔥 {streak}</span>
         )}
       </div>
 
