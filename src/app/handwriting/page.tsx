@@ -313,10 +313,11 @@ export default function HandwritingPage() {
                     )}
                   </>
                 ) : (
-                  /* fallback if word not in example */
+                  /* fallback: word not found in example — show as 中→日 with note */
                   <>
                     <p className="text-xs text-muted mb-3">{current.pos} · {current.topic}</p>
                     <p className="text-3xl font-bold text-foreground">{current.meaning_zh[0]}</p>
+                    <p className="text-[10px] text-muted/40 mt-2">（无可用例句，改为中→日模式）</p>
                   </>
                 );
               })()}
@@ -335,8 +336,8 @@ export default function HandwritingPage() {
               </button>
             </div>
 
-            {/* Mnemonic hint (if available) */}
-            {current.mnemonic && (
+            {/* Mnemonic hint: mode 1/3 always show; mode 2/4 only after feedback */}
+            {current.mnemonic && (mode === 1 || mode === 3 || feedback) && (
               <div className="w-full flex items-start gap-1.5 bg-yellow-400/5 border border-yellow-400/15 rounded-xl px-3 py-2">
                 <Lightbulb size={13} className="text-yellow-400 flex-none mt-0.5" />
                 <p className="text-xs text-yellow-600 dark:text-yellow-300/80 leading-relaxed">{current.mnemonic}</p>

@@ -145,6 +145,9 @@ export default function ReviewPage() {
           {current?.kind === "word" && (
             <SrsBadge stage={(current as { kind: "word"; item: Word }).item.srsStage} />
           )}
+          {current?.kind === "expression" && (
+            <SrsBadge stage={(current as { kind: "expression"; item: Expression }).item.srsStage} />
+          )}
           {streak >= 2 && (
             <span className="font-bold text-orange-400">🔥 {streak}</span>
           )}

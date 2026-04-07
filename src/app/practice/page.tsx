@@ -134,7 +134,13 @@ export default function PracticePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist session whenever step changes
+  // Restart session when topic changes mid-practice
+  useEffect(() => {
+    if (phase !== "practicing") return;
+    const bq = storage.getBJTQuestions();
+    startNewSession(selectedTopic, bq);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTopic]);
   useEffect(() => {
     if (phase !== "practicing" || steps.length === 0) return;
     saveSession({

@@ -52,6 +52,22 @@ export default function HomePage() {
         <p className="text-muted text-sm">ゼロから始める日本語タイピング学習</p>
       </div>
 
+      {/* 首次使用引导 */}
+      {mounted && words.length === 0 && (
+        <div className="mb-8 bg-accent/5 border border-accent/20 rounded-2xl px-5 py-5">
+          <p className="text-sm font-semibold text-foreground mb-1">👋 欢迎使用 KanaZero！</p>
+          <p className="text-xs text-muted mb-3">词库还是空的，先生成一些单词再开始练习吧</p>
+          <div className="flex items-center gap-3 text-xs text-muted">
+            <span className="flex items-center gap-1.5 bg-accent text-white px-3 py-1 rounded-full font-medium">① 去词库生成单词</span>
+            <span>→</span>
+            <span className="bg-surface px-3 py-1 rounded-full">② 回来开始练习</span>
+          </div>
+          <Link href="/vocabulary" className="mt-3 inline-block px-4 py-2 bg-accent text-white text-sm rounded-xl font-medium hover:bg-accent-dim transition-colors">
+            去词库添加单词 →
+          </Link>
+        </div>
+      )}
+
       {/* 今日目标完成庆祝横幅 */}
       {goalMet && (
         <div className="mb-6 bg-success/10 border border-success/30 rounded-2xl px-5 py-4 text-center">

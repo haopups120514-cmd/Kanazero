@@ -83,6 +83,7 @@ export default function QuizPage() {
   const { speak } = useSpeech();
 
   const [mounted, setMounted] = useState(false);
+  const [quizMode, setQuizMode] = useState<"today" | "all">("today");
   const [questions, setQuestions] = useState<QuizQ[]>([]);
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -100,15 +101,22 @@ export default function QuizPage() {
 
   useEffect(() => {
     if (!mounted || words.length === 0) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const studied = words.filter(
-      (w) => w.lastReview >= todayStart.getTime() && w.lastReview > 0
-    );
-    const q = buildQuiz(studied, words);
+    let source: Word[];
+    if (quizMode === "today") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      source = words.filter((w) => w.lastReview >= todayStart.getTime() && w.lastReview > 0);
+    } else {
+      source = [...words].sort(() => Math.random() - 0.5).slice(0, 20);
+    }
+    const q = buildQuiz(source, words);
     setQuestions(q);
     initialQRef.current = q;
-  }, [mounted, words]);
+    // Reset quiz state when mode changes
+    setIndex(0); setInput(""); setSelected(null);
+    setFeedback(null); setScore({ correct: 0, wrong: 0 });
+    setWrongWords([]); setDone(false);
+  }, [mounted, words, quizMode]);
 
   const current = questions[index];
 
@@ -159,15 +167,28 @@ export default function QuizPage() {
 
   if (!mounted) return null;
 
-  // No words studied today
+  // No words for selected mode
   if (questions.length === 0) {
     return (
       <PageLayout center maxWidth="sm">
         <div className="text-center flex flex-col items-center gap-4">
           <div className="text-5xl">📋</div>
           <h2 className="text-xl font-bold text-foreground">今日测验</h2>
-          <p className="text-muted text-sm">今天还没有学习记录</p>
-          <p className="text-muted/60 text-xs">先去练习或复习一些单词，再来测验吧</p>
+          {quizMode === "today" ? (
+            <>
+              <p className="text-muted text-sm">今天还没有学习记录</p>
+              {words.length > 0 && (
+                <button
+                  onClick={() => setQuizMode("all")}
+                  className="px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-dim transition-colors"
+                >
+                  测验全部词库 ({words.length} 个词)
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="text-muted text-sm">词库还没有单词，先生成一些吧</p>
+          )}
         </div>
       </PageLayout>
     );
@@ -239,6 +260,20 @@ export default function QuizPage() {
 
   return (
     <PageLayout maxWidth="sm">
+      {/* Mode toggle */}
+      {!done && (
+        <div className="w-full flex gap-1.5 mb-3">
+          {(["today", "all"] as const).map((m) => (
+            <button key={m} onClick={() => setQuizMode(m)}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                quizMode === m ? "bg-accent text-white" : "bg-surface text-muted hover:text-foreground"
+              }`}>
+              {m === "today" ? "今日词汇" : `全部词库 (${words.length})`}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Progress */}
       <div className="w-full mb-4">
         <div className="flex justify-between text-xs text-muted mb-1.5">
